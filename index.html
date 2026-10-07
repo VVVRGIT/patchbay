@@ -13,7 +13,7 @@ try { var t = localStorage.getItem('patchbay.theme'); if (t === 'dark' || t === 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%231F1F1F'/%3E%3Ccircle cx='10' cy='16' r='3.5' fill='%23fff'/%3E%3Ccircle cx='22' cy='16' r='3.5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M13 16 C16 10 17 22 19 16' stroke='%23fff' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,700..900&family=Geist:wght@400&family=Geist+Mono:wght@400&display=swap">
 <style>
 /* Layout: Leinwand mit Punktraster über die ganze Fläche. Schwebende Bedienelemente: Marke oben links, Status oben rechts,
    Werkzeugschiene links, Zoom unten links, Paket-Knopf unten rechts, Ausgabe als schwebende Karte rechts. Monochrom. */
@@ -47,7 +47,8 @@ try { var t = localStorage.getItem('patchbay.theme'); if (t === 'dark' || t === 
   --cable-1: #C99700; --cable-2: #23845A; --cable-3: #C63B2B; --cable-4: #7A3FB0;
   --font: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", Roboto, sans-serif;
   --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  --font-body: var(--font); --font-display: var(--font); --font-mono: var(--mono);
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font); --font-display: var(--display); --font-mono: var(--mono);
   --bg: var(--canvas); --panel: var(--inset);
   color-scheme: light;
 }
@@ -269,7 +270,7 @@ pre.json { font-family: var(--mono); font-size: 11.5px; line-height: 1.55; backg
 .hist li:not(:last-child)::after { content: ""; position: absolute; left: 7px; top: 16px; bottom: 0; width: 1.5px; background: var(--line); }
 .hist .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--raised); border: 1.5px solid var(--ink-2); position: relative; }
 .hist .dot::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--c); }
-.hist .h1 { font-weight: 600; font-size: 13px; }
+.hist .h1 { font-size: 13px; color: var(--ink); }
 .hist .h2 { font-family: var(--mono); font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
 .repro { font: 500 10px/1 var(--mono); padding: 3px 6px; border-radius: 5px; margin-left: 6px; background: var(--chip); vertical-align: 1px; }
 .repro.exact { background: color-mix(in srgb, var(--good) 18%, transparent); }
@@ -292,6 +293,17 @@ body.dragging-any iframe { pointer-events: none; }
   [data-tip]:hover::after { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .toast, .wire, .switch-input, .switch-input::after { transition: none; } }
+
+/* Typo-Regel: Copy nur Regular, Unterschiede über Größe und Helligkeit.
+   Gewicht nur in Headlines, dort die breite Archivo. Betonung im Text per Unterstreichung. */
+.app *, .toast { font-weight: 400 !important; }
+.app strong, .app b:not(.hl), .app em, .app .u { font-weight: 400; font-style: normal; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.tn-title, .side-head h2, .ctitle b, .brand .word { font-family: var(--display); font-stretch: 125%; text-decoration: none; }
+.app .tn-title { font-weight: 800 !important; font-size: 30px; line-height: 1.04; letter-spacing: -0.005em; }
+.app .side-head h2 { font-weight: 800 !important; font-size: 20px; line-height: 1.1; }
+.app .ctitle b { font-weight: 700 !important; font-size: 15px; letter-spacing: 0; }
+.app .brand .word { font-weight: 800 !important; font-size: 14px; letter-spacing: .01em; }
+.btn.solid { letter-spacing: .01em; }
 </style>
 </head>
 <body>
@@ -307,7 +319,7 @@ body.dragging-any iframe { pointer-events: none; }
   </div>
 
   <div class="float brand">
-    <button class="pill" id="brandBtn" aria-haspopup="true" aria-expanded="false" aria-controls="brandMenu"><span class="logo" aria-hidden="true"></span>Patchbay<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;color:var(--muted)"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="pill" id="brandBtn" aria-haspopup="true" aria-expanded="false" aria-controls="brandMenu"><span class="logo" aria-hidden="true"></span><span class="word">Patchbay</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;color:var(--muted)"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="pop menu" id="brandMenu" role="menu" hidden></div>
   </div>
 
@@ -403,7 +415,7 @@ header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .jack{width:12px;height:12px;border-radius:50%;background:var(--c)}
 h1{font:800 18px/1.1 var(--font-display,system-ui,sans-serif);font-stretch:118%;margin:0}
 .ver{font:500 11px/1 var(--font-mono,monospace);color:var(--muted)}
-.pb{margin-left:auto;font:600 11px/1 var(--font-mono,monospace);padding:4px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.pb{margin-left:auto;font:400 11px/1 var(--font-mono,monospace);padding:4px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
 .job{color:var(--muted);font-size:13px;margin-top:-6px}
 .stage{position:relative;background:var(--panel);border-radius:8px;overflow:hidden;aspect-ratio:1;max-width:100%}
 canvas{display:block;width:100%;height:100%}
@@ -417,14 +429,14 @@ input,select{font:13px/1.3 var(--font-body,system-ui,sans-serif);color:var(--ink
 input[type=range]{padding:0;accent-color:var(--accent);background:transparent;border:0}
 input[type=color]{height:32px;padding:2px}
 .seed{display:flex;gap:6px}
-button{font:600 13px/1 var(--font-body,system-ui,sans-serif);border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+button{font:400 13px/1 var(--font-body,system-ui,sans-serif);border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 button:disabled{opacity:.45;cursor:not-allowed}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .send{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:12px}
 .send label{font-size:13px;color:var(--ink)}
 .hist{font:12px/1.4 var(--font-mono,monospace);color:var(--muted)}
-.hist b{color:var(--ink);font-weight:600}
+.hist b{color:var(--ink);font-weight:400;text-decoration:underline;text-underline-offset:3px}
 </script>
 
 <script type="text/plain" id="tool-runtime">
@@ -716,7 +728,7 @@ function log(from, to, type, detail){
 
 /* ---------- Tool-Frames ---------- */
 var TOOL_CSS = $('tool-css').textContent, RUNTIME = $('tool-runtime').textContent;
-var FONT_LINK = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">';
+var FONT_LINK = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,700..900&family=Geist:wght@400&family=Geist+Mono:wght@400&display=swap">';
 function manifestOf(t){ return { id: t.id, name: t.name, job: t.job, version: t.version, accepts: t.accepts, produces: t.produces, modes: t.modes, deterministic: t.deterministic, op: t.op, repro: t.repro, params: t.params, cable: t.cableVar ? css(t.cableVar) : t.cable }; }
 function srcdoc(t){
   return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + FONT_LINK +
@@ -967,7 +979,7 @@ function buildNode(n){
       card.appendChild(po); n.outPort = po;
     }
     var hd = el2('header', 'chead'), av = el2('span', 'av', label(n).charAt(0).toUpperCase());
-    var tt = el2('div', 'ctitle'), b = el2('b', null, label(n));
+    var tt = el2('div', 'ctitle'), b = el2('b', 'hl', label(n));
     tt.appendChild(b);
     tt.appendChild(el2('small', null, n.tool ? n.tool.job : n.kind === 'output' ? 'Ende der Kette, wird zum Paket' : 'Web-Tool ohne Patchbay'));
     hd.appendChild(av); hd.appendChild(tt);
