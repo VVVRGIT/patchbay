@@ -10,7 +10,8 @@
 /* Gespeichertes Theme vor dem ersten Zeichnen setzen, damit nichts aufblitzt */
 try { var t = localStorage.getItem('patchbay.theme'); if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t); } catch(e){}
 </script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%231F1F1F'/%3E%3Ccircle cx='10' cy='16' r='3.5' fill='%23fff'/%3E%3Ccircle cx='22' cy='16' r='3.5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M13 16 C16 10 17 22 19 16' stroke='%23fff' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="/assets/patchbay-icon.svg">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,700..900&family=Geist:wght@400&family=Geist+Mono:wght@400&display=swap">
@@ -100,10 +101,8 @@ svg.i { width: 18px; height: 18px; flex: none; }
 .pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 6px; background: var(--raised); border: 1px solid var(--raised-edge); border-radius: 999px; box-shadow: var(--shadow); color: var(--ink); font: 600 13px/1 var(--font); }
 .brand { left: 16px; top: calc(14px + env(safe-area-inset-top, 0px)); }
 .brand > button { cursor: pointer; }
-.logo { width: 28px; height: 28px; border-radius: 50%; background: var(--solid); position: relative; flex: none; }
-.logo::before, .logo::after { content: ""; position: absolute; top: 50%; width: 7px; height: 7px; border-radius: 50%; transform: translateY(-50%); }
-.logo::before { left: 6px; background: var(--solid-ink); }
-.logo::after { right: 6px; border: 1.6px solid var(--solid-ink); }
+.logo { width: 28px; height: 28px; border-radius: 50%; background: var(--solid); color: var(--solid-ink); display: grid; place-items: center; flex: none; }
+.logo svg { width: 18px; height: 10px; display: block; }
 .status { right: 16px; top: calc(14px + env(safe-area-inset-top, 0px)); }
 .status .pill { padding: 0 14px; font-weight: 500; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
 .sdot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 20%, transparent); flex: none; }
@@ -319,7 +318,7 @@ body.dragging-any iframe { pointer-events: none; }
   </div>
 
   <div class="float brand">
-    <button class="pill" id="brandBtn" aria-haspopup="true" aria-expanded="false" aria-controls="brandMenu"><span class="logo" aria-hidden="true"></span><span class="word">Patchbay</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;color:var(--muted)"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="pill" id="brandBtn" aria-haspopup="true" aria-expanded="false" aria-controls="brandMenu"><span class="logo" aria-hidden="true"><svg viewBox="196 325 932 522"><circle cx="457" cy="586" r="200.5" fill="none" stroke="currentColor" stroke-width="81"/><path d="M931 446h79v98h97v79h-97v97h-79v-97h-97v-79h97z" fill="currentColor"/></svg></span><span class="word">Patchbay</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;color:var(--muted)"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="pop menu" id="brandMenu" role="menu" hidden></div>
   </div>
 
