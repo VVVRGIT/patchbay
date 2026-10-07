@@ -1,0 +1,25 @@
+{
+  "patchbay": "0.1",
+  "id": "tools.patchbay.halbton",
+  "name": "Halbton",
+  "version": "1.0.0",
+  "description": "Rasterpunkte wie im Zeitungsdruck",
+  "entry": "./",
+  "accepts": ["image/*"],
+  "produces": ["image/png"],
+  "modes": ["headless", "embedded", "standalone"],
+  "deterministic": true,
+  "op": "transform",
+  "repro": "exact",
+  "color": "#E2231A",
+  "params": [
+    { "id": "cell", "type": "int", "label": "Rasterweite", "min": 4, "max": 18, "step": 1, "default": 7 },
+    { "id": "angle", "type": "int", "label": "Winkel", "min": 0, "max": 90, "step": 1, "default": 45 },
+    { "id": "shape", "type": "enum", "label": "Form", "options": ["punkt", "raute", "linie"], "labels": { "punkt": "Punkt", "raute": "Raute", "linie": "Linie" }, "default": "punkt" },
+    { "id": "ink", "type": "color", "label": "Druckfarbe", "default": "#141414" },
+    { "id": "paper", "type": "color", "label": "Papier", "default": "#f2ede3" },
+    { "id": "invert", "type": "bool", "label": "Umkehren", "default": false }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/VVVRGIT/patchbay/tree/main/tools/halbton"
+}

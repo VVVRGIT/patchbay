@@ -1,43 +1,92 @@
-# Patchbay – Demo
+# Patchbay
 
-Offenes Protokoll, mit dem kleine Web-Kreativ-Tools Bilder, Vektoren, Animationen, Audio und Daten verlustfrei **samt kompletter Bearbeitungs- und Prompt-Historie** aneinander weitergeben. Die Demo ist ein **Node-Editor**: vier Tools laufen in abgeschotteten Frames und werden als frei verschiebbare Nodes verkabelt. Regler kommen aus dem Parameter-Schema der Tools, neu gerechnet wird nur, was sich geändert hat (Cache über Inhalts-Hashes). Die Kette zur Ausgabe wird zur Historie im Paket.
+Offenes Protokoll, mit dem kleine Web-Kreativ-Tools Bilder, Vektoren, Animationen, Audio und Daten verlustfrei **samt kompletter Bearbeitungs- und Prompt-Historie** aneinander weitergeben. Diese Demo ist ein **Node-Editor**: Tools laufen in abgeschotteten Frames und werden als frei verschiebbare Nodes verkabelt. Neu gerechnet wird nur, was sich geändert hat (Cache über Inhalts-Hashes). Die Kette zur Ausgabe wird zur Historie im Paket.
 
-**Bedienung**
+Live: https://patchbay-pi.vercel.app · Status: Spezifikation v0.1, Arbeitstitel „Patchbay“.
 
-- Deck: Nodes am Kopf verschieben, leere Fläche mit der Maus ziehen zum Verschieben, Strg/⌘ + Mausrad oder Pinch zum Zoomen, Klick auf die Prozentzahl passt alles ein.
-- Werkzeugleiste unten: **Neues Tool** (Tools, Presets, Anordnen, Zurücksetzen), **Notiz** (Haftnotiz auf dem Deck), **Stift** (direkt aufs Deck zeichnen, Esc beendet), Zoom, **Ausgabe** (Panel rechts).
-- Kabel vom rechten zum linken Anschluss ziehen; ein Kabel antippen trennt es.
-- Überschrift und Text liegen als bearbeitbarer Text-Node auf dem Deck.
-- Anordnung, Notizen und Striche werden im Browser gespeichert (localStorage).
+## Bedienung
 
-Status: Spezifikation v0.1, Arbeitstitel „Patchbay“.
+- **Deck:** Nodes am Kopf verschieben, leere Fläche mit der Maus ziehen, Strg/⌘ + Mausrad oder Pinch zum Zoomen, Klick auf die Prozentzahl passt alles ein.
+- **Werkzeugleiste:** Neues Tool (eingebaute, eingebundene und Brücken-Tools, Tool per URL, Presets), Notiz, Stift (Esc beendet), **UI: Einheitlich / Original**, Zoom, Ausgabe-Panel.
+- **Kabel** vom rechten zum linken Anschluss ziehen; ein Kabel antippen trennt es.
+- Anordnung, Notizen, Striche und eingebundene Tools speichert der Browser (localStorage).
+
+### UI-Modi
+
+| Modus | Wer zeichnet die Oberfläche? | Wann sinnvoll |
+| --- | --- | --- |
+| Einheitlich | Der Host, allein aus dem Parameter-Schema | Ruhiges, einheitliches Deck; funktioniert mit jedem Tool |
+| Original | Das Tool selbst, eingebettet im Node | Tools mit eigener Gestaltung oder Bedienelementen, die ein Schema nicht abbildet |
+
+Rechnen, Kabel, Cache und Historie bleiben in beiden Modi beim Host. Tools ohne `embedded` im Manifest erscheinen immer einheitlich.
+
+## Eigenes Tool einbinden
+
+1. Manifest `patchbay.json` neben dein Tool legen und per CORS freigeben (`Access-Control-Allow-Origin: *`):
+
+```json
+{
+  "patchbay": "0.1",
+  "id": "com.example.invert",
+  "name": "Invert",
+  "version": "1.0.0",
+  "description": "Farben umkehren",
+  "entry": "./",
+  "accepts": ["image/*"],
+  "produces": ["image/png"],
+  "modes": ["headless", "embedded"],
+  "deterministic": true,
+  "repro": "exact",
+  "color": "#0E8C8C",
+  "params": [
+    { "id": "amount", "type": "number", "label": "Stärke", "min": 0, "max": 100, "default": 100 }
+  ]
+}
+```
+
+2. Auf der Tool-Seite das SDK laden und `render` liefern:
+
+```html
+<script src="https://patchbay-pi.vercel.app/sdk/patchbay.js"></script>
+<script>
+  fetch('patchbay.json').then(r => r.json()).then(manifest => {
+    Patchbay.tool({
+      manifest,
+      render(input, params) {            // ImageData | null → ImageData
+        const out = new ImageData(input.width, input.height), s = input.data, d = out.data, k = params.amount / 100;
+        for (let i = 0; i < s.length; i += 4) {
+          d[i] = s[i] + (255 - 2 * s[i]) * k; d[i+1] = s[i+1] + (255 - 2 * s[i+1]) * k; d[i+2] = s[i+2] + (255 - 2 * s[i+2]) * k; d[i+3] = s[i+3];
+        }
+        return out;
+      },
+      ui(pb) { /* optional: eigene Oberfläche, pb.setParams({...}), pb.onState(s => ...) */ }
+    });
+  });
+</script>
+```
+
+3. Im Deck: **Neues Tool → Tool per URL einbinden** → Adresse des Manifests eintragen.
+
+Parameter-Typen: `int`, `number`, `bool`, `enum` (mit `options`, optional `labels`), `color`, `string`, `prompt`, `seed`.
+Beispiel mit eigener Gestaltung: [`tools/halbton`](tools/halbton) (live: `/tools/halbton/`).
+
+### Web-Tools ohne Patchbay
+
+Tools, die das Protokoll nicht sprechen (z. B. Jinero Image Flow), werden über einen **Brücken-Node** eingebunden: Eingangsbild kopieren, im Tool bearbeiten, Ergebnis per Ablegen, Einfügen oder Dateiauswahl zurückholen. Der Schritt landet als `repro: opaque` in der Historie.
 
 ## Struktur
 
-| Datei | Zweck |
+| Pfad | Zweck |
 | --- | --- |
-| `index.html` | Komplette Demo, ohne Build-Schritt |
-| `registry.json` | Tool-Register mit Manifesten (CORS offen, für Verzeichnisse und andere Hosts) |
-| `vercel.json` | Saubere URLs, Header |
+| `index.html` | Host: Node-Editor, ohne Build-Schritt |
+| `sdk/patchbay.js` | SDK für Tool-Macher (Modi headless, embedded, standalone) |
+| `tools/halbton/` | Beispiel-Tool mit eigenem Look und Manifest |
+| `registry.json` | Tool-Register (CORS offen) |
+| `vercel.json` | Saubere URLs, CORS-Header für Manifeste und SDK |
 
-## Auf Vercel veröffentlichen
+## Sicherheit
 
-**Weg A – GitHub (empfohlen, Auto-Deploy bei jedem Push)**
-
-1. Neues Repository auf GitHub anlegen, z. B. `patchbay`, öffentlich.
-2. Inhalt dieses Ordners hochladen („Add file → Upload files“ reicht).
-3. Auf [vercel.com/new](https://vercel.com/new) das Repository importieren.
-4. Framework Preset: **Other**. Build Command und Output Directory leer lassen. **Deploy**.
-
-**Weg B – Vercel CLI (ohne GitHub, ca. 2 Minuten)**
-
-```bash
-cd patchbay-site
-npx vercel        # einmalig einloggen, Fragen mit Enter bestätigen
-npx vercel --prod # Produktions-URL
-```
-
-Lokal testen: `npx serve .` und `http://localhost:3000` öffnen.
+Eingebundene Tools laufen in Sandbox-iframes. Der Host prüft bei jeder Verbindung die Herkunft (`origin`) gegen das Manifest und die gemeldete Tool-ID. Tools sehen weder das Deck noch andere Tools, nur die Pakete, die der Host ihnen gibt.
 
 ## Lizenz
 

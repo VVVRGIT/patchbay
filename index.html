@@ -205,6 +205,21 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
 .toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 13px; padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); z-index: 300000; }
 .toast.show { opacity: 1; }
 
+body.dragging-any iframe { pointer-events: none; }
+.toolui { display: block; width: 100%; height: 360px; border: 0; border-radius: 6px; background: transparent; }
+.tag-ext { font: 500 10px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; flex: none; }
+.menu form { display: grid; gap: 6px; padding: 2px 8px 8px; }
+.menu input[type="url"] { font: 12px/1.3 var(--font-mono); padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 100%; min-width: 0; }
+.menu .err { font-size: 12px; color: var(--cable-3); margin: 0; }
+.menu form .btn { justify-self: start; }
+.menu small { overflow-wrap: anywhere; }
+.node.bridge { border-top-style: dashed; }
+.bridge .drop { border: 1.5px dashed var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; justify-items: center; text-align: center; font-size: 12px; color: var(--muted); }
+.bridge .drop:focus-visible, .bridge .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); outline: none; }
+.bridge .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.bridge .acts .btn { font-size: 12px; padding: 7px 9px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.field.check label { justify-content: flex-start; color: var(--ink); }
+.field.check input { accent-color: var(--accent); }
 @media (max-width: 820px) {
   .app, .app.no-side { grid-template-columns: minmax(0, 1fr); }
   .side { position: fixed; left: 0; right: 0; bottom: 0; height: 72vh; z-index: 200000; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; box-shadow: 0 -20px 40px -20px rgba(0,0,0,.4); }
@@ -250,6 +265,9 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
         </button>
         <button class="tbtn" id="clearBtn" title="Alle Striche löschen"><span>Leeren</span></button>
       </div>
+      <button class="tbtn" id="uiBtn" aria-pressed="false" title="Tool-Oberflächen: einheitlich aus dem Schema oder original vom Tool">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg><span class="lbl" id="uiLbl">UI: Einheitlich</span>
+      </button>
       <span class="sep" aria-hidden="true"></span>
       <button class="tbtn sq" id="zoomOut" title="Verkleinern" aria-label="Verkleinern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
       <button class="zoomval" id="zoomVal" title="Alles einpassen">100%</button>
@@ -416,7 +434,7 @@ function applyTheme(t){ if (!t) return; Object.keys(t).forEach(function(k){ if (
 
 function el(tag, attrs, kids){ var e = document.createElement(tag); if (attrs) Object.keys(attrs).forEach(function(k){ if (k === 'text') e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }); (kids || []).forEach(function(c){ e.appendChild(c); }); return e; }
 
-function buildUI(){
+function buildUI(embedded){
   var app = el('div', {class:'app'});
   app.appendChild(el('header', null, [el('span', {class:'jack'}), el('h1', {text:M.name}), el('span', {class:'ver', text:'v' + M.version}), el('span', {class:'pb', text:'Patchbay 0.1'})]));
   app.appendChild(el('div', {class:'job', text:M.job}));
@@ -430,31 +448,32 @@ function buildUI(){
     if (p.type === 'int' || p.type === 'number'){
       var o = el('output', {text:String(params[p.id])}); lab.appendChild(o);
       ctl = el('input', {id:id, type:'range', min:p.min, max:p.max, step:p.step || 1}); ctl.value = params[p.id];
-      ctl.addEventListener('input', function(){ params[p.id] = Number(ctl.value); o.textContent = ctl.value; schedule(); });
+      ctl.addEventListener('input', function(){ params[p.id] = Number(ctl.value); o.textContent = ctl.value; changed(); });
       f.appendChild(lab); f.appendChild(ctl);
     } else if (p.type === 'enum'){
       ctl = el('select', {id:id}); p.options.forEach(function(op){ var oe = el('option', {value:op, text:(p.labels && p.labels[op]) || op}); ctl.appendChild(oe); }); ctl.value = params[p.id];
-      ctl.addEventListener('change', function(){ params[p.id] = ctl.value; schedule(); });
+      ctl.addEventListener('change', function(){ params[p.id] = ctl.value; changed(); });
       f.appendChild(lab); f.appendChild(ctl);
     } else if (p.type === 'color'){
       ctl = el('input', {id:id, type:'color'}); ctl.value = params[p.id];
-      ctl.addEventListener('input', function(){ params[p.id] = ctl.value; schedule(); });
+      ctl.addEventListener('input', function(){ params[p.id] = ctl.value; changed(); });
       f.appendChild(lab); f.appendChild(ctl);
     } else if (p.type === 'seed'){
       ctl = el('input', {id:id, type:'number', min:0, step:1}); ctl.value = params[p.id];
       var dice = el('button', {type:'button', text:'Zufall'});
-      ctl.addEventListener('input', function(){ params[p.id] = Number(ctl.value) || 0; schedule(); });
-      dice.addEventListener('click', function(){ ctl.value = Math.floor(Math.random() * 999999); params[p.id] = Number(ctl.value); schedule(); });
+      ctl.addEventListener('input', function(){ params[p.id] = Number(ctl.value) || 0; changed(); });
+      dice.addEventListener('click', function(){ ctl.value = Math.floor(Math.random() * 999999); params[p.id] = Number(ctl.value); changed(); });
       f.appendChild(lab); f.appendChild(el('div', {class:'seed'}, [ctl, dice]));
     } else {
       ctl = el('input', {id:id, type:'text'}); ctl.value = params[p.id];
-      ctl.addEventListener('input', function(){ params[p.id] = ctl.value; schedule(); });
+      ctl.addEventListener('input', function(){ params[p.id] = ctl.value; changed(); });
       f.appendChild(lab); f.appendChild(ctl);
     }
     form.appendChild(f);
   });
   app.appendChild(form);
-  histEl = el('div', {class:'hist'}); app.appendChild(histEl); renderHist();
+  if (!embedded){ histEl = el('div', {class:'hist'}); app.appendChild(histEl); renderHist(); }
+  if (embedded){ emptyEl.textContent = 'Wartet auf Eingang.'; document.body.appendChild(app); return; }
   sel = el('select', {id:'target', 'aria-label':'Ziel-Tool'});
   sendBtn = el('button', {type:'button', class:'primary', text:'Senden'}); sendBtn.disabled = true;
   sendBtn.addEventListener('click', send);
@@ -480,6 +499,8 @@ function fillTargets(){
 }
 
 function schedule(){ clearTimeout(timer); timer = setTimeout(renderInteractive, 60); }
+function changed(){ if (mode === 'embedded') port.postMessage({ pb: 'params', v: '0.1', values: params }); else schedule(); }
+function reportSize(){ if (port) port.postMessage({ pb: 'size', v: '0.1', h: Math.ceil(document.documentElement.scrollHeight) }); }
 function renderInteractive(){
   if (M.op !== 'generate' && !input){ emptyEl.hidden = false; sendBtn.disabled = true; return; }
   emptyEl.hidden = true;
@@ -506,6 +527,10 @@ async function send(){
 async function onMsg(d){
   if (!d || !d.pb) return;
   if (d.pb === 'theme') applyTheme(d.theme);
+  else if (d.pb === 'state'){
+    if (d.output){ ctx.putImageData(new ImageData(new Uint8ClampedArray(d.output.buf), d.output.w, d.output.h), 0, 0); emptyEl.hidden = true; }
+    else emptyEl.hidden = false;
+  }
   else if (d.pb === 'targets'){ targets = d.list; fillTargets(); }
   else if (d.pb === 'offer'){
     var ok = (d.summary.types || []).every(function(t){ return M.accepts.some(function(a){ return a === t || (a.slice(-2) === '/*' && t.indexOf(a.slice(0, -1)) === 0); }); });
@@ -535,7 +560,13 @@ window.addEventListener('message', function(e){
   var d = e.data; if (!d || d.pb !== 'init' || port) return;
   port = e.ports[0]; mode = d.mode; applyTheme(d.theme);
   port.onmessage = function(ev){ onMsg(ev.data); };
-  if (mode === 'interactive'){ buildUI(); renderInteractive(); }
+  if (mode === 'interactive'){ buildUI(false); renderInteractive(); }
+  else if (mode === 'embedded'){
+    if (d.params) Object.keys(d.params).forEach(function(k){ params[k] = d.params[k]; });
+    buildUI(true);
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(reportSize).observe(document.documentElement);
+    reportSize();
+  }
 });
 parent.postMessage({ pb: 'hello', v: '0.1', tool: { id: M.id, version: M.version }, accepts: M.accepts, produces: M.produces }, '*');
 })();
@@ -546,24 +577,25 @@ parent.postMessage({ pb: 'hello', v: '0.1', tool: { id: M.id, version: M.version
 'use strict';
 var TOOLS = [
   { id: 'app.demo.imagine', short: 'imagine', name: 'Imagine', job: 'Bild aus Prompt (simuliertes Modell)', version: '0.3.0', cableVar: '--cable-1',
-    accepts: [], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'generate', repro: 'seeded',
+    accepts: [], produces: ['image/png'], modes: ['interactive', 'headless', 'embedded'], source: 'builtin', deterministic: true, op: 'generate', repro: 'seeded',
     params: [ { id: 'prompt', type: 'prompt', label: 'Prompt', default: 'Kreise über Streifen, Abenddämmerung' },
               { id: 'seed', type: 'seed', label: 'Seed', default: 421337 },
               { id: 'density', type: 'int', label: 'Dichte', min: 3, max: 16, step: 1, default: 8 } ] },
   { id: 'app.demo.posterize', short: 'stufen', name: 'Stufen', job: 'Farben auf wenige Stufen reduzieren', version: '1.2.0', cableVar: '--cable-2',
-    accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'transform', repro: 'exact',
+    accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless', 'embedded'], source: 'builtin', deterministic: true, op: 'transform', repro: 'exact',
     params: [ { id: 'levels', type: 'int', label: 'Stufen', min: 2, max: 10, step: 1, default: 4 },
               { id: 'contrast', type: 'number', label: 'Kontrast', min: -50, max: 50, step: 1, default: 10 } ] },
   { id: 'app.demo.dither', short: 'raster', name: 'Raster', job: 'Dithering in Schwarz-Weiß', version: '2.1.0', cableVar: '--cable-3',
-    accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'transform', repro: 'exact',
+    accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless', 'embedded'], source: 'builtin', deterministic: true, op: 'transform', repro: 'exact',
     params: [ { id: 'algorithm', type: 'enum', label: 'Verfahren', options: ['atkinson', 'floyd', 'bayer'], labels: { atkinson: 'Atkinson', floyd: 'Floyd-Steinberg', bayer: 'Bayer 4×4' }, default: 'atkinson' },
               { id: 'scale', type: 'int', label: 'Pixelgröße', min: 1, max: 5, step: 1, default: 2 } ] },
   { id: 'app.demo.duotone', short: 'duoton', name: 'Duoton', job: 'Helligkeit auf zwei Farben abbilden', version: '1.0.4', cableVar: '--cable-4',
-    accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'transform', repro: 'exact',
+    accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless', 'embedded'], source: 'builtin', deterministic: true, op: 'transform', repro: 'exact',
     params: [ { id: 'dark', type: 'color', label: 'Dunkel', default: '#1b2a6b' },
               { id: 'light', type: 'color', label: 'Hell', default: '#f6f0e4' } ] }
 ];
 var byId = {}; TOOLS.forEach(function(t){ byId[t.id] = t; });
+function colorOf(t){ return t.cable || ('var(' + t.cableVar + ')'); }
 var THEME_VARS = ['--bg', '--panel', '--raised', '--ink', '--muted', '--line', '--accent', '--accent-ink', '--font-body', '--font-display', '--font-mono'];
 var $ = function(id){ return document.getElementById(id); };
 var css = function(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); };
@@ -594,7 +626,7 @@ function log(from, to, type, detail){
 /* ---------- Tool-Frames ---------- */
 var TOOL_CSS = $('tool-css').textContent, RUNTIME = $('tool-runtime').textContent;
 var FONT_LINK = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">';
-function manifestOf(t){ return { id: t.id, name: t.name, job: t.job, version: t.version, accepts: t.accepts, produces: t.produces, modes: t.modes, deterministic: t.deterministic, op: t.op, repro: t.repro, params: t.params, cable: css(t.cableVar) }; }
+function manifestOf(t){ return { id: t.id, name: t.name, job: t.job, version: t.version, accepts: t.accepts, produces: t.produces, modes: t.modes, deterministic: t.deterministic, op: t.op, repro: t.repro, params: t.params, cable: t.cableVar ? css(t.cableVar) : t.cable }; }
 function srcdoc(t){
   return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + FONT_LINK +
     '<style>' + TOOL_CSS + '</style></head><body><script>window.MANIFEST=' + JSON.stringify(manifestOf(t)).replace(/</g, '\\u003c') + ';<\/script><script>' + RUNTIME + '<\/script></body></html>';
@@ -602,10 +634,11 @@ function srcdoc(t){
 var frames = [];
 function makeFrame(t, mode, parent){
   var f = document.createElement('iframe');
-  f.setAttribute('sandbox', 'allow-scripts');
-  f.setAttribute('title', t.name + ' (Node)');
-  f.srcdoc = srcdoc(t);
-  var entry = { tool: t, mode: mode, iframe: f, port: null, pending: {} };
+  f.setAttribute('title', t.name + (mode === 'embedded' ? ' (Oberfläche)' : ' (Node)'));
+  if (t.source === 'url'){ f.setAttribute('sandbox', 'allow-scripts allow-same-origin'); f.src = t.entry; }
+  else { f.setAttribute('sandbox', 'allow-scripts'); f.srcdoc = srcdoc(t); }
+  if (mode === 'embedded') f.className = 'toolui';
+  var entry = { tool: t, mode: mode, iframe: f, port: null, pending: {}, node: null };
   entry.ready = new Promise(function(res){ entry.resolveReady = res; });
   frames.push(entry); parent.appendChild(f);
   return entry;
@@ -614,11 +647,15 @@ window.addEventListener('message', function(e){
   var d = e.data; if (!d || d.pb !== 'hello') return;
   var entry = frames.find(function(f){ return f.iframe.contentWindow === e.source; });
   if (!entry || entry.port) return;
+  var expected = entry.tool.source === 'url' ? entry.tool.origin : 'null';
+  if (e.origin !== expected){ log(String(e.origin), 'Host', 'error', 'Herkunft passt nicht zum Manifest von ' + entry.tool.name + ', Nachricht verworfen'); return; }
+  if (!d.tool || d.tool.id !== entry.tool.id){ log(entry.tool.name, 'Host', 'error', 'Tool meldet eine andere ID: ' + (d.tool && d.tool.id)); return; }
   var ch = new MessageChannel(); entry.port = ch.port1;
   ch.port1.onmessage = function(ev){ onToolMsg(entry, ev.data); };
-  entry.iframe.contentWindow.postMessage({ pb: 'init', v: '0.1', mode: entry.mode, theme: themeVars() }, '*', [ch.port2]);
-  log(entry.tool.name, 'Host', 'hello', 'nimmt an: ' + (d.accepts.length ? d.accepts.join(', ') : '— (Quelle)') + ' · gibt aus: ' + d.produces.join(', '));
+  entry.iframe.contentWindow.postMessage({ pb: 'init', v: '0.1', mode: entry.mode, theme: themeVars(), params: entry.node ? clone(entry.node.params) : undefined }, '*', [ch.port2]);
+  if (entry.mode === 'headless') log(entry.tool.name, 'Host', 'hello', 'nimmt an: ' + (d.accepts.length ? d.accepts.join(', ') : '— (Quelle)') + ' · gibt aus: ' + d.produces.join(', '));
   entry.resolveReady();
+  if (entry.node) sendState(entry.node);
 });
 function request(entry, msg, transfer){
   return new Promise(function(res, rej){
@@ -630,7 +667,22 @@ function request(entry, msg, transfer){
 function onToolMsg(entry, d){
   if (!d || !d.pb) return;
   var key = d.id || d.rid;
-  if (key && entry.pending[key]){ var p = entry.pending[key]; delete entry.pending[key]; p.res(d); }
+  if (key && entry.pending[key]){ var p = entry.pending[key]; delete entry.pending[key]; p.res(d); return; }
+  if (d.pb === 'params' && entry.node && d.values && typeof d.values === 'object'){
+    var n = entry.node;
+    n.tool.params.forEach(function(q){ if (Object.prototype.hasOwnProperty.call(d.values, q.id)) n.params[q.id] = d.values[q.id]; });
+    schedule();
+  } else if (d.pb === 'size' && entry.mode === 'embedded'){
+    var h = Math.min(1200, Math.max(120, Number(d.h) || 0));
+    entry.iframe.style.height = h + 'px';
+    clearTimeout(entry.sizeT); entry.sizeT = setTimeout(sizeBoard, 120);
+  }
+}
+function whenReady(entry){ return Promise.race([entry.ready, new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('Tool antwortet nicht')); }, 8000); })]); }
+function sendState(n){
+  var f = n.uiFrame; if (!f || !f.port) return;
+  var o = n.out, copy = o ? o.buf.slice(0) : null;
+  f.port.postMessage({ pb: 'state', v: '0.1', params: clone(n.params), output: o ? { buf: copy, w: o.w, h: o.h } : null }, copy ? [copy] : []);
 }
 var headless = {};
 TOOLS.forEach(function(t){ headless[t.id] = makeFrame(t, 'headless', $('frames')); });
@@ -644,18 +696,26 @@ var NW = 210, OW = 236, TW = 620, NOTEW = 230, PORT_Y = 27;
 var DEFAULT_TITLE = 'Bilder, die ihre Geschichte mitnehmen';
 var DEFAULT_BODY = 'Vier kleine Tools, jedes in seinem eigenen abgeschotteten Frame. Sie kennen einander nicht und sprechen nur Patchbay. Steck sie als Nodes zusammen: Jedes Ergebnis trägt ein Paket mit verlustfreiem Bild und kompletter Historie inklusive Prompt.';
 
-function widthOf(kind){ return kind === 'tool' ? NW : kind === 'output' ? OW : kind === 'text' ? TW : NOTEW; }
+function widthOf(kind){ return kind === 'tool' ? NW : kind === 'output' ? OW : kind === 'text' ? TW : kind === 'bridge' ? 236 : NOTEW; }
+var UIW = 300, BRIDGE_DEFAULT = 'https://jinero.online/images/studio';
+var uiMode = (function(){ try { return localStorage.getItem('patchbay.ui') === 'original' ? 'original' : 'uniform'; } catch(e){ return 'uniform'; } })();
+function useOriginal(n){ return uiMode === 'original' && n.kind === 'tool' && n.tool.modes.indexOf('embedded') >= 0; }
+function applyWidths(){ nodes.forEach(function(n){ if (n.kind === 'tool') n.w = useOriginal(n) ? UIW : NW; }); }
+function hostOf(u){ try { return new URL(u).hostname.replace(/^www\./, ''); } catch(e){ return 'Web-Tool'; } }
 function newNode(kind, tool, x, y){
   var n = { key: kind === 'output' ? 'out' : (tool ? tool.short : kind) + '-' + (++seq), kind: kind, tool: tool || null, params: {}, x: Math.round(x), y: Math.round(y), w: widthOf(kind), bypass: false, out: null, inHash: null, status: '' };
   if (tool) tool.params.forEach(function(q){ n.params[q.id] = q.default; });
+  if (kind === 'bridge') n.url = BRIDGE_DEFAULT;
   nodes.push(n); return n;
 }
 function nodeBy(k){ return nodes.find(function(n){ return n.key === k; }); }
 function srcOf(n){ var e = edges.find(function(e){ return e.to === n.key; }); return e ? nodeBy(e.from) : null; }
-function cableOf(n){ return n.tool ? n.tool.cableVar : '--accent'; }
-function label(n){ return n.tool ? n.tool.name : n.kind === 'output' ? 'Ausgabe' : n.kind === 'note' ? 'Notiz' : 'Text'; }
-function isPipe(n){ return n.kind === 'tool' || n.kind === 'output'; }
-function hasIn(n){ return n.kind === 'output' || (n.kind === 'tool' && n.tool.op !== 'generate'); }
+function cableOf(n){ return n.tool ? colorOf(n.tool) : n.kind === 'bridge' ? 'var(--muted)' : 'var(--accent)'; }
+function label(n){ return n.tool ? n.tool.name : n.kind === 'output' ? 'Ausgabe' : n.kind === 'bridge' ? hostOf(n.url) : n.kind === 'note' ? 'Notiz' : 'Text'; }
+function isPipe(n){ return n.kind === 'tool' || n.kind === 'output' || n.kind === 'bridge'; }
+function hasIn(n){ return n.kind === 'output' || n.kind === 'bridge' || (n.kind === 'tool' && n.tool.op !== 'generate'); }
+function hasOut(n){ return n.kind === 'tool' || n.kind === 'bridge'; }
+function producesOf(n){ return n.tool ? n.tool.produces : ['image/png']; }
 
 /* ---------- Speichern im Browser ---------- */
 var STORE = 'patchbay.deck.v1', saveT = null;
@@ -664,7 +724,7 @@ function save(){
   saveT = setTimeout(function(){
     try {
       localStorage.setItem(STORE, JSON.stringify({ v: 1, seq: seq, edges: edges, strokes: strokes,
-        nodes: nodes.map(function(n){ return { key: n.key, kind: n.kind, tool: n.tool ? n.tool.id : null, params: n.params, x: n.x, y: n.y, bypass: n.bypass, title: n.title, body: n.body, text: n.text }; }) }));
+        nodes: nodes.map(function(n){ return { key: n.key, kind: n.kind, tool: n.tool ? n.tool.id : null, params: n.params, x: n.x, y: n.y, bypass: n.bypass, title: n.title, body: n.body, text: n.text, url: n.url, img: n.img }; }) }));
     } catch(e){}
   }, 300);
 }
@@ -679,6 +739,7 @@ function load(){
       n.key = s.key; Object.assign(n.params, s.params || {}); n.bypass = !!s.bypass;
       if (s.kind === 'text'){ n.title = s.title || ''; n.body = s.body || ''; }
       if (s.kind === 'note') n.text = s.text || '';
+      if (s.kind === 'bridge'){ n.url = s.url || BRIDGE_DEFAULT; if (s.img) n.img = s.img; }
     });
     seq = Math.max(seq, d.seq || 0);
     if (!nodeBy('out')) newNode('output', null, 900, 260);
@@ -709,6 +770,12 @@ function buildField(n, p){
     ctl = document.createElement('input'); ctl.type = 'color'; ctl.value = n.params[p.id];
     ctl.addEventListener('input', function(){ n.params[p.id] = ctl.value; schedule(); });
     f.appendChild(lab); f.appendChild(ctl);
+  } else if (p.type === 'bool'){
+    f.className = 'field check';
+    ctl = document.createElement('input'); ctl.type = 'checkbox'; ctl.checked = !!n.params[p.id];
+    ctl.addEventListener('change', function(){ n.params[p.id] = ctl.checked; schedule(); });
+    lab.textContent = ''; lab.appendChild(ctl); lab.appendChild(document.createTextNode(' ' + p.label));
+    f.appendChild(lab);
   } else if (p.type === 'seed'){
     ctl = document.createElement('input'); ctl.type = 'number'; ctl.min = 0; ctl.step = 1; ctl.value = n.params[p.id];
     var dice = document.createElement('button'); dice.type = 'button'; dice.className = 'btn'; dice.textContent = 'Zufall';
@@ -743,7 +810,7 @@ function buildNode(n){
   el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; el.style.width = n.w + 'px';
   el.setAttribute('aria-label', label(n));
   var hd = document.createElement('header'); hd.className = 'handle';
-  n.inPort = n.outPort = null; n.thumb = null; n.statusEl = null;
+  n.inPort = n.outPort = null; n.thumb = null; n.statusEl = null; n.uiFrame = null;
 
   if (n.kind === 'text'){
     el.className = 'node textnode';
@@ -766,14 +833,16 @@ function buildNode(n){
     editable(body, 'Notiz schreiben …', function(t){ n.text = t; });
     el.appendChild(body); n.noteBody = body;
   } else {
-    el.className = 'node' + (n.bypass ? ' bypass' : '');
-    el.style.setProperty('--c', 'var(' + cableOf(n) + ')');
+    var orig = useOriginal(n);
+    if (n.kind === 'tool'){ n.w = orig ? UIW : NW; el.style.width = n.w + 'px'; }
+    el.className = 'node' + (n.bypass ? ' bypass' : '') + (n.kind === 'bridge' ? ' bridge' : '') + (orig ? ' original' : '');
+    el.style.setProperty('--c', cableOf(n));
     if (hasIn(n)){
       var pi = document.createElement('span'); pi.className = 'port in'; pi.dataset.key = n.key; pi.title = 'Eingang';
       pi.addEventListener('pointerdown', function(e){ startFromIn(e, n); });
       el.appendChild(pi); n.inPort = pi;
     }
-    if (n.kind === 'tool'){
+    if (hasOut(n)){
       var po = document.createElement('span'); po.className = 'port out'; po.title = 'Ausgang: Kabel ziehen';
       po.addEventListener('pointerdown', function(e){ startWire(e, n); });
       el.appendChild(po); n.outPort = po;
@@ -781,18 +850,29 @@ function buildNode(n){
     var j = document.createElement('span'); j.className = 'jack';
     var h3 = document.createElement('h3'); h3.textContent = label(n);
     hd.appendChild(j); hd.appendChild(h3);
-    if (n.tool){ var v = document.createElement('span'); v.className = 'ver'; v.textContent = 'v' + n.tool.version; hd.appendChild(v); }
-    if (n.kind === 'tool') hd.appendChild(delButton(n));
-    el.appendChild(hd);
-    var job = document.createElement('div'); job.className = 'job'; job.textContent = n.tool ? n.tool.job : 'Ende der Kette, wird zum Paket';
-    el.appendChild(job);
-    var cv = document.createElement('canvas'); cv.className = 'thumb'; cv.width = 360; cv.height = 360; cv.setAttribute('aria-label', 'Ergebnis von ' + label(n));
-    n.thumb = cv; if (n.out) drawBuf(cv, n.out);
-    el.appendChild(cv);
     if (n.tool){
-      var ps = document.createElement('div'); ps.className = 'params';
-      n.tool.params.forEach(function(q){ ps.appendChild(buildField(n, q)); });
-      el.appendChild(ps);
+      if (n.tool.source === 'url'){ var tg = document.createElement('span'); tg.className = 'tag-ext'; tg.textContent = 'extern'; tg.title = n.tool.manifestUrl; hd.appendChild(tg); }
+      var v = document.createElement('span'); v.className = 'ver'; v.textContent = 'v' + n.tool.version; hd.appendChild(v);
+    }
+    if (n.kind === 'bridge'){ var tb = document.createElement('span'); tb.className = 'tag-ext'; tb.textContent = 'Brücke'; hd.appendChild(tb); }
+    if (n.kind === 'tool' || n.kind === 'bridge') hd.appendChild(delButton(n));
+    el.appendChild(hd);
+    if (orig){
+      n.uiFrame = makeFrame(n.tool, 'embedded', el);
+      n.uiFrame.node = n;
+    } else if (n.kind === 'bridge'){
+      buildBridgeBody(n, el, h3);
+    } else {
+      var job = document.createElement('div'); job.className = 'job'; job.textContent = n.tool ? n.tool.job : 'Ende der Kette, wird zum Paket';
+      el.appendChild(job);
+      var cv = document.createElement('canvas'); cv.className = 'thumb'; cv.width = 360; cv.height = 360; cv.setAttribute('aria-label', 'Ergebnis von ' + label(n));
+      n.thumb = cv; if (n.out) drawBuf(cv, n.out);
+      el.appendChild(cv);
+      if (n.tool){
+        var ps = document.createElement('div'); ps.className = 'params';
+        n.tool.params.forEach(function(q){ ps.appendChild(buildField(n, q)); });
+        el.appendChild(ps);
+      }
     }
     var ft = document.createElement('div'); ft.className = 'cardfoot';
     var st = document.createElement('span'); st.className = 'status'; n.statusEl = st; setStatus(n, n.status);
@@ -812,7 +892,81 @@ function buildNode(n){
   n.el = el;
   plane.appendChild(el);
 }
+function buildBridgeBody(n, el, h3){
+  var job = document.createElement('div'); job.className = 'job'; job.textContent = 'Web-Tool ohne Patchbay. Bild rüberbringen, Ergebnis zurückholen.';
+  el.appendChild(job);
+  var f = document.createElement('div'); f.className = 'field';
+  var id = 'u-' + n.key, lab = document.createElement('label'); lab.setAttribute('for', id); lab.textContent = 'Adresse des Tools';
+  var inp = document.createElement('input'); inp.type = 'text'; inp.id = id; inp.value = n.url; inp.inputMode = 'url'; inp.spellcheck = false;
+  f.appendChild(lab); f.appendChild(inp); el.appendChild(f);
+  var acts = document.createElement('div'); acts.className = 'acts';
+  var open = document.createElement('a'); open.className = 'btn'; open.href = n.url; open.target = '_blank'; open.rel = 'noopener'; open.textContent = 'Öffnen ↗';
+  var cp = document.createElement('button'); cp.type = 'button'; cp.className = 'btn'; cp.textContent = 'Eingang kopieren';
+  cp.addEventListener('click', function(){ copyInput(n); });
+  acts.appendChild(open); acts.appendChild(cp); el.appendChild(acts);
+  inp.addEventListener('change', function(){
+    var v = inp.value.trim(); if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+    n.url = v; inp.value = v; open.href = v; h3.textContent = label(n); save(); schedule();
+  });
+  var cv = document.createElement('canvas'); cv.className = 'thumb'; cv.width = 360; cv.height = 360; cv.setAttribute('aria-label', 'Zurückgeholtes Ergebnis');
+  n.thumb = cv; if (n.out) drawBuf(cv, n.out); el.appendChild(cv);
+  var drop = document.createElement('div'); drop.className = 'drop'; drop.tabIndex = 0; drop.setAttribute('role', 'button');
+  drop.setAttribute('aria-label', 'Ergebnis hier ablegen oder einfügen');
+  var t1 = document.createElement('span'); t1.textContent = 'Ergebnis hier ablegen, oder anklicken und einfügen (Strg/⌘+V)';
+  var file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*'; file.hidden = true;
+  var pick = document.createElement('button'); pick.type = 'button'; pick.className = 'btn'; pick.textContent = 'Datei wählen';
+  pick.addEventListener('click', function(e){ e.stopPropagation(); file.click(); });
+  file.addEventListener('change', function(){ if (file.files[0]) importImage(n, file.files[0]); file.value = ''; });
+  drop.addEventListener('click', function(){ drop.focus(); });
+  drop.addEventListener('dragover', function(e){ e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', function(){ drop.classList.remove('over'); });
+  drop.addEventListener('drop', function(e){
+    e.preventDefault(); drop.classList.remove('over');
+    var fl = Array.prototype.find.call(e.dataTransfer.files || [], function(x){ return /^image\//.test(x.type); });
+    if (fl) importImage(n, fl); else toast('Das ist kein Bild. Bitte PNG, JPG oder WebP ablegen.');
+  });
+  drop.addEventListener('paste', function(e){
+    var it = Array.prototype.find.call((e.clipboardData && e.clipboardData.items) || [], function(x){ return /^image\//.test(x.type); });
+    if (it){ e.preventDefault(); importImage(n, it.getAsFile()); } else toast('In der Zwischenablage ist kein Bild.');
+  });
+  drop.appendChild(t1); drop.appendChild(pick); drop.appendChild(file); el.appendChild(drop);
+}
+function bufToCanvas(o){ var c = document.createElement('canvas'); c.width = o.w; c.height = o.h; c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(o.buf), o.w, o.h), 0, 0); return c; }
+function copyInput(n){
+  if (!n.inBuf){ toast('Kein Eingangsbild. Verbinde zuerst ein Tool mit der Brücke.'); return; }
+  bufToCanvas(n.inBuf).toBlob(function(blob){
+    var fallback = function(){
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'patchbay-eingang.png';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      toast('Bild als patchbay-eingang.png gespeichert. In ' + label(n) + ' öffnen.');
+    };
+    try {
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(function(){ toast('Bild kopiert. In ' + label(n) + ' einfügen.'); }).catch(fallback);
+    } catch(e){ fallback(); }
+  }, 'image/png');
+}
+async function importDrawable(n, src, silent){
+  var S = 360, c = document.createElement('canvas'); c.width = S; c.height = S;
+  var g = c.getContext('2d'), w = src.width, h = src.height, k = Math.max(S / w, S / h);
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, S, S);
+  g.drawImage(src, (S - w * k) / 2, (S - h * k) / 2, w * k, h * k);
+  var id = g.getImageData(0, 0, S, S), buf = id.data.buffer;
+  n.imported = { buf: buf, w: S, h: S, hash: await hashBuf(buf) };
+  try { var url = c.toDataURL('image/png'); n.img = url.length < 1500000 ? url : null; } catch(e){ n.img = null; }
+  if (!silent){ log(label(n), 'Host', 'import', 'Ergebnis aus ' + label(n) + ' übernommen · ' + shortHash(n.imported.hash)); toast('Ergebnis übernommen'); }
+  schedule();
+}
+function importImage(n, blob){
+  createImageBitmap(blob).then(function(bmp){ return importDrawable(n, bmp, false); }).catch(function(){ toast('Das Bild konnte nicht gelesen werden.'); });
+}
+function restoreBridges(){
+  nodes.forEach(function(n){
+    if (n.kind !== 'bridge' || !n.img || n.imported) return;
+    var im = new Image(); im.onload = function(){ importDrawable(n, im, true); }; im.src = n.img;
+  });
+}
 function buildBoard(){
+  frames = frames.filter(function(f){ return f.mode !== 'embedded'; });
   plane.querySelectorAll('.node').forEach(function(x){ x.remove(); });
   nodes.forEach(buildNode); drawInk(); sizeBoard(); drawWires();
 }
@@ -880,9 +1034,9 @@ function drawWires(){
     var t = document.createElementNS(SVGNS, 'title'); t.textContent = label(a) + ' → ' + label(b) + ' · antippen zum Trennen'; hit.appendChild(t);
     hit.addEventListener('click', function(){ edges = edges.filter(function(x){ return x !== e; }); log('Host', 'Graph', 'disconnect', label(a) + ' ✕ ' + label(b)); drawWires(); schedule(); });
     wires.appendChild(hit);
-    wires.appendChild(svgPath(d, 'wire', 'var(' + cableOf(a) + ')'));
+    wires.appendChild(svgPath(d, 'wire', cableOf(a)));
   });
-  if (temp) wires.appendChild(svgPath(curve(temp.a, temp.b), 'wire temp', 'var(' + cableOf(temp.from) + ')'));
+  if (temp) wires.appendChild(svgPath(curve(temp.a, temp.b), 'wire temp', cableOf(temp.from)));
   nodes.forEach(function(n){
     if (n.inPort) n.inPort.classList.toggle('on', edges.some(function(e){ return e.to === n.key; }));
     if (n.outPort) n.outPort.classList.toggle('on', edges.some(function(e){ return e.from === n.key; }));
@@ -890,7 +1044,8 @@ function drawWires(){
 }
 function boardPt(e){ var r = plane.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
 function onDrag(move, end){
-  function up(ev){ window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); end(ev); }
+  document.body.classList.add('dragging-any');
+  function up(ev){ document.body.classList.remove('dragging-any'); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); end(ev); }
   window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
 }
 function startDrag(e, n, el){
@@ -925,7 +1080,7 @@ function upstreamHas(n, key){ for (var s = srcOf(n); s; s = srcOf(s)){ if (s.key
 function connect(a, b){
   if (!a || !b || a === b || !hasIn(b)) return;
   if (upstreamHas(a, b.key)){ toast('Das würde eine Schleife bauen'); return; }
-  if (b.tool && !b.tool.accepts.some(function(t){ return a.tool.produces.some(function(o){ return t === o || (t.slice(-2) === '/*' && o.indexOf(t.slice(0, -1)) === 0); }); })){ toast(label(b) + ' nimmt das nicht an'); return; }
+  if (b.tool && !b.tool.accepts.some(function(t){ return producesOf(a).some(function(o){ return t === o || (t.slice(-2) === '/*' && o.indexOf(t.slice(0, -1)) === 0); }); })){ toast(label(b) + ' nimmt das nicht an'); return; }
   edges = edges.filter(function(x){ return x.to !== b.key; });
   edges.push({ from: a.key, to: b.key });
   log('Host', 'Graph', 'connect', label(a) + ' → ' + label(b));
@@ -934,6 +1089,7 @@ function connect(a, b){
 function removeNode(n){
   nodes = nodes.filter(function(x){ return x !== n; });
   edges = edges.filter(function(e){ return e.from !== n.key && e.to !== n.key; });
+  frames = frames.filter(function(f){ return f.node !== n; });
   if (n.el) n.el.remove();
   if (isPipe(n)) log('Host', 'Graph', 'remove', label(n));
   sizeBoard(); drawWires(); if (isPipe(n)) schedule(); else save();
@@ -953,6 +1109,7 @@ function addNode(kind, tool){
   if (kind === 'note') n.text = '';
   buildNode(n); n.el.style.zIndex = ++zTop; sizeBoard(); drawWires(); reveal(n);
   if (kind === 'tool'){ log('Host', 'Graph', 'add', tool.name); toast(tool.name + ' hinzugefügt. Kabel ziehen, um ihn zu verbinden.'); schedule(); }
+  else if (kind === 'bridge'){ log('Host', 'Graph', 'add', 'Brücke zu ' + label(n)); toast('Brücke hinzugefügt. Kabel anschließen, Bild kopieren, Ergebnis hier ablegen.'); schedule(); }
   else { save(); if (n.noteBody) n.noteBody.focus(); }
   return n;
 }
@@ -1011,35 +1168,114 @@ document.addEventListener('keydown', function(e){
 /* ---------- Menü „Neues Tool“ ---------- */
 var menu = $('toolMenu'), toolBtn = $('toolBtn');
 function closeMenu(){ menu.hidden = true; toolBtn.setAttribute('aria-expanded', 'false'); }
-function openMenu(){ menu.hidden = false; toolBtn.setAttribute('aria-expanded', 'true'); var f = menu.querySelector('button'); if (f) f.focus(); }
+function openMenu(){ buildMenu(); menu.hidden = false; toolBtn.setAttribute('aria-expanded', 'true'); var f = menu.querySelector('button'); if (f) f.focus(); }
 toolBtn.addEventListener('click', function(){ if (menu.hidden) openMenu(); else closeMenu(); });
 document.addEventListener('pointerdown', function(e){ if (!menu.hidden && !$('menuWrap').contains(e.target)) closeMenu(); });
-function menuItem(title, sub, cable, fn){
+function menuItem(title, sub, color, fn, tag){
   var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
-  if (cable){ var j = document.createElement('span'); j.className = 'jack'; j.style.setProperty('--c', 'var(' + cable + ')'); b.appendChild(j); }
+  if (color){ var j = document.createElement('span'); j.className = 'jack'; j.style.setProperty('--c', color); b.appendChild(j); }
   else b.className = 'plain';
-  var t = document.createElement('span'); t.textContent = title; b.appendChild(t);
+  var t = document.createElement('span'); t.textContent = title;
+  if (tag){ var tg = document.createElement('span'); tg.className = 'tag-ext'; tg.style.marginLeft = '6px'; tg.textContent = tag; t.appendChild(tg); }
+  b.appendChild(t);
   if (sub){ var s = document.createElement('small'); s.textContent = sub; b.appendChild(s); }
   b.addEventListener('click', function(){ closeMenu(); fn(); });
   return b;
 }
 function heading(t){ var h = document.createElement('h4'); h.textContent = t; return h; }
-menu.appendChild(heading('Tools'));
-TOOLS.forEach(function(t){ menu.appendChild(menuItem(t.name, t.job + ' · v' + t.version, t.cableVar, function(){ addNode('tool', t); })); });
-menu.appendChild(document.createElement('hr'));
-menu.appendChild(heading('Presets'));
 var PRESETS = [
   { name: 'Zeitung', sub: 'Stufen → Raster → Duoton', chain: ['app.demo.posterize', 'app.demo.dither', 'app.demo.duotone'], p: { 'app.demo.posterize': { levels: 3, contrast: 22 }, 'app.demo.dither': { algorithm: 'floyd', scale: 2 }, 'app.demo.duotone': { dark: '#16181c', light: '#efe9dc' } } },
   { name: 'Siebdruck', sub: 'Stufen → Duoton', chain: ['app.demo.posterize', 'app.demo.duotone'], p: { 'app.demo.posterize': { levels: 4, contrast: 18 }, 'app.demo.duotone': { dark: '#1b2a6b', light: '#ff8a5c' } } },
   { name: 'Handheld', sub: 'Raster → Duoton', chain: ['app.demo.dither', 'app.demo.duotone'], p: { 'app.demo.dither': { algorithm: 'bayer', scale: 3 }, 'app.demo.duotone': { dark: '#0f380f', light: '#9bbc0f' } } }
 ];
-PRESETS.forEach(function(pr){ menu.appendChild(menuItem(pr.name, pr.sub, null, function(){
-  pr.chain.forEach(function(id){ Object.assign(firstOf(id).params, pr.p[id] || {}); });
-  setChain(pr.chain); toast('Preset ' + pr.name + ' geladen');
-})); });
-menu.appendChild(document.createElement('hr'));
-menu.appendChild(menuItem('Kette anordnen', 'Verbundene Nodes in eine Reihe legen', null, function(){ layout(currentChain()); buildBoard(); fit(); save(); }));
-menu.appendChild(menuItem('Deck zurücksetzen', 'Ausgangszustand, Notizen und Striche entfernen', null, function(){ try { localStorage.removeItem(STORE); } catch(e){} defaults(); buildBoard(); fit(); schedule(); toast('Deck zurückgesetzt'); }));
+function buildMenu(){
+  menu.innerHTML = '';
+  menu.appendChild(heading('Eingebaut'));
+  TOOLS.filter(function(t){ return t.source === 'builtin'; }).forEach(function(t){ menu.appendChild(menuItem(t.name, t.job + ' · v' + t.version, colorOf(t), function(){ addNode('tool', t); })); });
+  var ext = TOOLS.filter(function(t){ return t.source === 'url'; });
+  if (ext.length){
+    menu.appendChild(heading('Eingebunden'));
+    ext.forEach(function(t){ menu.appendChild(menuItem(t.name, (t.job ? t.job + ' · ' : '') + hostOf(t.entry) + ' · v' + t.version, colorOf(t), function(){ addNode('tool', t); }, 'extern')); });
+  }
+  menu.appendChild(heading('Weitere Tools'));
+  menu.appendChild(menuItem('Web-Tool ohne Patchbay', 'Brücke, z. B. Jinero Image Flow: Bild rüberkopieren, Ergebnis zurückholen', 'var(--muted)', function(){ addNode('bridge', null); }, 'Brücke'));
+  var form = document.createElement('form'); form.noValidate = true;
+  var fl = document.createElement('label'); fl.setAttribute('for', 'toolUrl'); fl.className = 'empty'; fl.textContent = 'Tool per URL einbinden (Patchbay-Manifest)';
+  var inp = document.createElement('input'); inp.type = 'url'; inp.id = 'toolUrl'; inp.placeholder = 'https://…/patchbay.json'; inp.spellcheck = false;
+  var err = document.createElement('p'); err.className = 'err'; err.hidden = true; err.setAttribute('role', 'alert');
+  var go = document.createElement('button'); go.type = 'submit'; go.className = 'btn'; go.textContent = 'Einbinden';
+  form.appendChild(fl); form.appendChild(inp); form.appendChild(err); form.appendChild(go);
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var v = inp.value.trim(); if (!v){ err.textContent = 'Bitte die Adresse eines Patchbay-Manifests eintragen.'; err.hidden = false; return; }
+    go.disabled = true; go.textContent = 'Lade …'; err.hidden = true;
+    registerFromUrl(v).then(function(t){
+      rememberToolUrl(t.manifestUrl); closeMenu(); addNode('tool', t);
+      log('Host', t.name, 'register', 'Manifest geladen von ' + hostOf(t.manifestUrl));
+    }).catch(function(ex){
+      err.textContent = ex.message; err.hidden = false; go.disabled = false; go.textContent = 'Einbinden';
+    });
+  });
+  menu.appendChild(form);
+  menu.appendChild(document.createElement('hr'));
+  menu.appendChild(heading('Presets'));
+  PRESETS.forEach(function(pr){ menu.appendChild(menuItem(pr.name, pr.sub, null, function(){
+    pr.chain.forEach(function(id){ Object.assign(firstOf(id).params, pr.p[id] || {}); });
+    setChain(pr.chain); toast('Preset ' + pr.name + ' geladen');
+  })); });
+  menu.appendChild(document.createElement('hr'));
+  menu.appendChild(menuItem('Kette anordnen', 'Verbundene Nodes in eine Reihe legen', null, function(){ applyWidths(); layout(currentChain()); buildBoard(); fit(); save(); }));
+  menu.appendChild(menuItem('Deck zurücksetzen', 'Ausgangszustand, Notizen und Striche entfernen', null, function(){ try { localStorage.removeItem(STORE); } catch(e){} defaults(); buildBoard(); fit(); schedule(); toast('Deck zurückgesetzt'); }));
+}
+
+/* ---------- Eingebundene Tools ---------- */
+var TOOL_STORE = 'patchbay.tools.v1', DEFAULT_EXTERNAL = ['/tools/halbton/patchbay.json'];
+var PALETTE = ['#0E8C8C', '#D9480F', '#5C7CFA', '#AE3EC9', '#2B8A3E'];
+function savedToolUrls(){ try { var a = JSON.parse(localStorage.getItem(TOOL_STORE) || '[]'); return Array.isArray(a) ? a.filter(function(x){ return typeof x === 'string'; }) : []; } catch(e){ return []; } }
+function rememberToolUrl(u){
+  var def = DEFAULT_EXTERNAL.map(function(x){ return new URL(x, location.href).href; });
+  if (def.indexOf(u) >= 0) return;
+  var list = savedToolUrls(); if (list.indexOf(u) < 0){ list.push(u); try { localStorage.setItem(TOOL_STORE, JSON.stringify(list)); } catch(e){} }
+}
+function validManifest(m){
+  return m && typeof m.id === 'string' && /^[\w.\-]{3,120}$/.test(m.id) && typeof m.name === 'string' && typeof m.version === 'string' && typeof m.entry === 'string'
+    && Array.isArray(m.accepts) && Array.isArray(m.produces) && Array.isArray(m.params) && Array.isArray(m.modes) && m.modes.indexOf('headless') >= 0
+    && m.params.every(function(p){ return p && typeof p.id === 'string' && typeof p.type === 'string'; });
+}
+async function registerFromUrl(url){
+  var abs;
+  try { abs = new URL(url, location.href).href; } catch(e){ throw new Error('Das ist keine gültige Adresse.'); }
+  if (!/^https?:/.test(abs)) throw new Error('Nur http- und https-Adressen sind erlaubt.');
+  var res;
+  try { res = await fetch(abs, { mode: 'cors', cache: 'no-cache' }); }
+  catch(e){ throw new Error('Manifest nicht erreichbar. Der Server muss CORS für diese Datei erlauben.'); }
+  if (!res.ok) throw new Error('Manifest nicht erreichbar (HTTP ' + res.status + ').');
+  var m; try { m = await res.json(); } catch(e){ throw new Error('Die Datei ist kein JSON. Erwartet wird ein Patchbay-Manifest.'); }
+  if (!validManifest(m)) throw new Error('Kein gültiges Patchbay-Manifest. Pflicht: id, name, version, entry, accepts, produces, params und modes mit „headless“.');
+  if (byId[m.id]) return byId[m.id];
+  var entry = new URL(m.entry, abs).href;
+  var t = { id: m.id, short: (m.id.split('.').pop() || 'tool').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'tool', name: String(m.name).slice(0, 40), job: String(m.description || '').slice(0, 90), version: String(m.version).slice(0, 20),
+    cable: (typeof m.color === 'string' && /^#[0-9a-f]{6}$/i.test(m.color)) ? m.color : PALETTE[TOOLS.length % PALETTE.length],
+    accepts: m.accepts, produces: m.produces, modes: m.modes, deterministic: !!m.deterministic, op: m.op === 'generate' ? 'generate' : 'transform',
+    repro: ['exact', 'seeded', 'documented', 'opaque'].indexOf(m.repro) >= 0 ? m.repro : (m.deterministic ? 'exact' : 'documented'),
+    params: m.params, source: 'url', manifestUrl: abs, entry: entry, origin: new URL(entry).origin };
+  TOOLS.push(t); byId[t.id] = t;
+  headless[t.id] = makeFrame(t, 'headless', $('frames'));
+  return t;
+}
+
+/* ---------- UI-Modus ---------- */
+function applyUiBtn(){
+  $('uiBtn').setAttribute('aria-pressed', uiMode === 'original' ? 'true' : 'false');
+  $('uiLbl').textContent = uiMode === 'original' ? 'UI: Original' : 'UI: Einheitlich';
+}
+$('uiBtn').addEventListener('click', function(){
+  uiMode = uiMode === 'original' ? 'uniform' : 'original';
+  try { localStorage.setItem('patchbay.ui', uiMode); } catch(e){}
+  applyUiBtn(); applyWidths(); layout(currentChain()); buildBoard(); fit(); schedule();
+  toast(uiMode === 'original' ? 'Original: Jedes Tool zeigt seine eigene Oberfläche' : 'Einheitlich: Regler aus dem Parameter-Schema');
+});
+applyUiBtn();
 
 $('noteBtn').addEventListener('click', function(){ addNode('note', null); });
 
@@ -1075,6 +1311,11 @@ async function run(){
     if (n.kind === 'output'){
       var so = srcOf(n); res = so ? await ev(so) : null;
       setStatus(n, res ? shortHash(res.hash) : 'nicht verbunden');
+    } else if (n.kind === 'bridge'){
+      var sb = srcOf(n), inb = sb ? await ev(sb) : null;
+      n.inBuf = inb; n.inHash = inb ? inb.hash : null;
+      res = n.imported || null;
+      setStatus(n, res ? 'übernommen' : (inb ? 'wartet auf Ergebnis' : 'Bild ablegen'));
     } else {
       var input = null, inHash = null;
       if (n.tool.op !== 'generate'){
@@ -1091,7 +1332,8 @@ async function run(){
         res = cache.get(key);
         if (res){ hits++; setStatus(n, 'Cache'); }
         else {
-          var entry = headless[n.tool.id]; await entry.ready;
+          var entry = headless[n.tool.id];
+          try { await whenReady(entry); } catch(err){ setStatus(n, 'antwortet nicht'); log('Host', label(n), 'error', err.message); return null; }
           var copy = input ? input.buf.slice(0) : null, r;
           try { r = await request(entry, { pb: 'render', v: '0.1', rid: uid(), input: copy ? { buf: copy, w: input.w, h: input.h } : null, params: clone(n.params) }, copy ? [copy] : []); }
           catch(err){ setStatus(n, 'Fehler'); log('Host', label(n), 'error', err.message); return null; }
@@ -1112,13 +1354,20 @@ async function run(){
   pipe.forEach(function(n){ if (n.thumb){ if (n.out) drawBuf(n.thumb, n.out); else clearCv(n.thumb); } });
   if (hits && !renders) log('Host', 'Cache', 'cache', 'Keine Neuberechnung nötig, ' + hits + ' Nodes aus dem Cache');
   var outN = nodeBy('out');
-  var hist = currentChain().filter(function(n){ return !n.bypass && n.out; }).map(function(n, k){
-    var node = { id: 'n' + (k + 1), op: n.tool.op, tool: { id: n.tool.id, version: n.tool.version }, params: {}, inputs: n.inHash ? [n.inHash] : [], outputs: [n.out.hash], repro: n.tool.repro };
-    Object.keys(n.params).forEach(function(q){ if (q !== 'prompt' && q !== 'seed') node.params[q] = n.params[q]; });
-    if (n.tool.op === 'generate'){ node.prompt = { text: n.params.prompt }; node.model = { name: 'demo-noise-1', note: 'simuliert, kein echtes KI-Modell' }; node.seed = n.params.seed; }
-    return node;
+  var items = currentChain().filter(function(n){ return !n.bypass && n.out; }).map(function(n, k){
+    var node;
+    if (n.kind === 'bridge'){
+      node = { id: 'n' + (k + 1), op: 'manual', tool: { id: 'web:' + hostOf(n.url), version: '–', url: n.url }, params: {}, inputs: n.inHash ? [n.inHash] : [], outputs: [n.out.hash], repro: 'opaque', note: 'Außerhalb von Patchbay bearbeitet' };
+    } else {
+      node = { id: 'n' + (k + 1), op: n.tool.op, tool: { id: n.tool.id, version: n.tool.version }, params: {}, inputs: n.inHash ? [n.inHash] : [], outputs: [n.out.hash], repro: n.tool.repro };
+      if (n.tool.source === 'url') node.tool.manifest = n.tool.manifestUrl;
+      Object.keys(n.params).forEach(function(q){ if (q !== 'prompt' && q !== 'seed') node.params[q] = n.params[q]; });
+      if (n.tool.op === 'generate' && n.tool.source === 'builtin'){ node.prompt = { text: n.params.prompt }; node.model = { name: 'demo-noise-1', note: 'simuliert, kein echtes KI-Modell' }; node.seed = n.params.seed; }
+    }
+    return { n: n, h: node };
   });
-  if (outN && outN.out){ drawBuf($('out'), outN.out); renderOut(outN.out, hist, performance.now() - t0, hits); }
+  nodes.forEach(function(n){ if (n.uiFrame) sendState(n); });
+  if (outN && outN.out){ drawBuf($('out'), outN.out); renderOut(outN.out, items, performance.now() - t0, hits); }
   else {
     clearCv($('out')); $('histList').innerHTML = ''; $('pkgJson2').textContent = 'Die Ausgabe ist nicht verbunden.';
     var meta = $('outMeta'); meta.innerHTML = '';
@@ -1126,20 +1375,22 @@ async function run(){
     meta.appendChild(dt); meta.appendChild(dd);
   }
 }
-function renderOut(o, hist, ms, hits){
+function renderOut(o, items, ms, hits){
+  var hist = items.map(function(i){ return i.h; });
   var meta = $('outMeta'); meta.innerHTML = '';
-  [['Größe', o.w + ' × ' + o.h + ' px, 8 Bit RGBA'], ['Hash', shortHash(o.hash)], ['Kette', hist.map(function(n){ return byId[n.tool.id].name; }).join(' → ')], ['Lauf', Math.round(ms) + ' ms, ' + hits + ' aus Cache']].forEach(function(r){
+  [['Größe', o.w + ' × ' + o.h + ' px, 8 Bit RGBA'], ['Hash', shortHash(o.hash)], ['Kette', items.map(function(i){ return label(i.n); }).join(' → ')], ['Lauf', Math.round(ms) + ' ms, ' + hits + ' aus Cache']].forEach(function(r){
     var dt = document.createElement('dt'); dt.textContent = r[0]; var dd = document.createElement('dd'); dd.textContent = r[1]; meta.appendChild(dt); meta.appendChild(dd);
   });
   var ol = $('histList'); ol.innerHTML = '';
-  hist.forEach(function(n){
-    var t = byId[n.tool.id], li = document.createElement('li');
-    var dot = document.createElement('span'); dot.className = 'dot'; dot.style.setProperty('--c', 'var(' + t.cableVar + ')');
+  items.forEach(function(it){
+    var n = it.h, li = document.createElement('li');
+    var dot = document.createElement('span'); dot.className = 'dot'; dot.style.setProperty('--c', cableOf(it.n));
     var box = document.createElement('div');
-    var h1 = document.createElement('div'); h1.className = 'h1'; h1.textContent = n.id + ' · ' + t.name + ' ';
+    var h1 = document.createElement('div'); h1.className = 'h1'; h1.textContent = n.id + ' · ' + label(it.n) + ' ';
     var rp = document.createElement('span'); rp.className = 'repro ' + n.repro; rp.textContent = n.repro; h1.appendChild(rp);
     var h2 = document.createElement('div'); h2.className = 'h2';
-    var bits = [n.op + ' · ' + n.tool.id + '@' + n.tool.version];
+    var bits = [n.op + ' · ' + n.tool.id + (n.tool.version !== '–' ? '@' + n.tool.version : '')];
+    if (n.note) bits.push(n.note);
     if (n.prompt) bits.push('Prompt: „' + n.prompt.text + '“ · Seed ' + n.seed);
     var ps = Object.keys(n.params).map(function(k){ return k + '=' + n.params[k]; }).join(', '); if (ps) bits.push(ps);
     bits.push((n.inputs[0] ? shortHash(n.inputs[0]) : 'keine Eingabe') + ' → ' + shortHash(n.outputs[0]));
@@ -1168,28 +1419,38 @@ function setChain(ids){
   for (var i = 1; i < chain.length; i++) edges.push({ from: chain[i - 1].key, to: chain[i].key });
   edges.push({ from: chain[chain.length - 1].key, to: outN.key });
   chain.forEach(function(n){ n.bypass = false; });
-  layout(chain); buildBoard(); fit(); schedule();
+  applyWidths(); layout(chain); buildBoard(); fit(); schedule();
 }
 function defaults(){
   nodes = []; edges = []; strokes = []; seq = 0;
   var t = newNode('text', null, 40, 32); t.title = DEFAULT_TITLE; t.body = DEFAULT_BODY;
   var g = newNode('tool', byId['app.demo.imagine'], 0, 0), a = newNode('tool', byId['app.demo.posterize'], 0, 0), b = newNode('tool', byId['app.demo.dither'], 0, 0), d = newNode('tool', byId['app.demo.duotone'], 0, 0);
   newNode('output', null, 0, 0);
+  applyWidths();
   edges = [{ from: g.key, to: a.key }, { from: a.key, to: b.key }, { from: b.key, to: d.key }, { from: d.key, to: 'out' }];
   layout([g, a, b, d]);
   var n = newNode('note', null, 720, 40); n.text = 'Kabel vom rechten zum linken Anschluss ziehen. Ein Kabel antippen trennt es. Mit dem Stift kannst du direkt aufs Deck schreiben.';
 }
 
 /* ---------- Start ---------- */
-if (!load()) defaults();
-setSide(!narrow.matches);
-buildBoard();
-requestAnimationFrame(function(){ fit(); });
 window.addEventListener('resize', function(){ sizeBoard(); });
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ setTimeout(sendThemeAll, 30); }); } catch(e){}
 new MutationObserver(function(){ setTimeout(sendThemeAll, 30); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 function sendThemeAll(){ var t = themeVars(); frames.forEach(function(f){ if (f.port) f.port.postMessage({ pb: 'theme', theme: t }); }); }
-Promise.all(TOOLS.map(function(t){ return headless[t.id].ready; })).then(run);
+(async function start(){
+  var defs = DEFAULT_EXTERNAL.map(function(x){ return new URL(x, location.href).href; });
+  var urls = defs.concat(savedToolUrls().filter(function(u){ return defs.indexOf(u) < 0; }));
+  await Promise.all(urls.map(function(u){ return registerFromUrl(u).catch(function(err){ log('Host', hostOf(u), 'error', 'Tool nicht geladen: ' + err.message); }); }));
+  buildMenu();
+  if (!load()) defaults();
+  applyWidths();
+  setSide(!narrow.matches);
+  buildBoard();
+  restoreBridges();
+  requestAnimationFrame(function(){ fit(); });
+  await Promise.all(TOOLS.filter(function(t){ return t.source === 'builtin'; }).map(function(t){ return headless[t.id].ready; }));
+  run();
+})();
 })();
 </script>
 </body>

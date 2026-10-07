@@ -7,14 +7,15 @@
       "name": "Imagine",
       "version": "0.3.0",
       "description": "Bild aus Prompt (simuliertes Modell)",
-      "entry": "/#imagine",
+      "entry": "/",
       "accepts": [],
       "produces": [
         "image/png"
       ],
       "modes": [
         "interactive",
-        "headless"
+        "headless",
+        "embedded"
       ],
       "deterministic": true,
       "op": "generate",
@@ -42,14 +43,15 @@
           "default": 8
         }
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "source": "builtin"
     },
     {
       "id": "app.demo.posterize",
       "name": "Stufen",
       "version": "1.2.0",
       "description": "Farben auf wenige Stufen reduzieren",
-      "entry": "/#stufen",
+      "entry": "/",
       "accepts": [
         "image/*"
       ],
@@ -58,7 +60,8 @@
       ],
       "modes": [
         "interactive",
-        "headless"
+        "headless",
+        "embedded"
       ],
       "deterministic": true,
       "op": "transform",
@@ -83,14 +86,15 @@
           "default": 10
         }
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "source": "builtin"
     },
     {
       "id": "app.demo.dither",
       "name": "Raster",
       "version": "2.1.0",
       "description": "Dithering in Schwarz-Weiß",
-      "entry": "/#raster",
+      "entry": "/",
       "accepts": [
         "image/*"
       ],
@@ -99,7 +103,8 @@
       ],
       "modes": [
         "interactive",
-        "headless"
+        "headless",
+        "embedded"
       ],
       "deterministic": true,
       "op": "transform",
@@ -131,14 +136,15 @@
           "default": 2
         }
       ],
-      "license": "MIT"
+      "license": "MIT",
+      "source": "builtin"
     },
     {
       "id": "app.demo.duotone",
       "name": "Duoton",
       "version": "1.0.4",
       "description": "Helligkeit auf zwei Farben abbilden",
-      "entry": "/#duoton",
+      "entry": "/",
       "accepts": [
         "image/*"
       ],
@@ -147,7 +153,8 @@
       ],
       "modes": [
         "interactive",
-        "headless"
+        "headless",
+        "embedded"
       ],
       "deterministic": true,
       "op": "transform",
@@ -165,6 +172,28 @@
           "label": "Hell",
           "default": "#f6f0e4"
         }
+      ],
+      "license": "MIT",
+      "source": "builtin"
+    },
+    {
+      "id": "tools.patchbay.halbton",
+      "name": "Halbton",
+      "version": "1.0.0",
+      "description": "Rasterpunkte wie im Zeitungsdruck",
+      "source": "url",
+      "manifest": "/tools/halbton/patchbay.json",
+      "entry": "/tools/halbton/",
+      "accepts": [
+        "image/*"
+      ],
+      "produces": [
+        "image/png"
+      ],
+      "modes": [
+        "headless",
+        "embedded",
+        "standalone"
       ],
       "license": "MIT"
     }
