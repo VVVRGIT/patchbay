@@ -1103,10 +1103,11 @@ function reveal(n){
   var h = nodeH(n) * scale, top = n.y * scale - 40, bottom = n.y * scale + h + 120;
   if (top < board.scrollTop || bottom > board.scrollTop + board.clientHeight){ board.scrollTo({ top: Math.max(0, Math.min(top, bottom - board.clientHeight)), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
 }
-function addNode(kind, tool){
+function addNode(kind, tool, opts){
   var c = freeSpot(widthOf(kind));
   var n = newNode(kind, tool, c.x, c.y);
   if (kind === 'note') n.text = '';
+  if (kind === 'bridge' && opts && opts.url) n.url = opts.url;
   buildNode(n); n.el.style.zIndex = ++zTop; sizeBoard(); drawWires(); reveal(n);
   if (kind === 'tool'){ log('Host', 'Graph', 'add', tool.name); toast(tool.name + ' hinzugefügt. Kabel ziehen, um ihn zu verbinden.'); schedule(); }
   else if (kind === 'bridge'){ log('Host', 'Graph', 'add', 'Brücke zu ' + label(n)); toast('Brücke hinzugefügt. Kabel anschließen, Bild kopieren, Ergebnis hier ablegen.'); schedule(); }
@@ -1200,20 +1201,28 @@ function buildMenu(){
   menu.appendChild(heading('Weitere Tools'));
   menu.appendChild(menuItem('Web-Tool ohne Patchbay', 'Brücke, z. B. Jinero Image Flow: Bild rüberkopieren, Ergebnis zurückholen', 'var(--muted)', function(){ addNode('bridge', null); }, 'Brücke'));
   var form = document.createElement('form'); form.noValidate = true;
-  var fl = document.createElement('label'); fl.setAttribute('for', 'toolUrl'); fl.className = 'empty'; fl.textContent = 'Tool per URL einbinden (Patchbay-Manifest)';
-  var inp = document.createElement('input'); inp.type = 'url'; inp.id = 'toolUrl'; inp.placeholder = 'https://…/patchbay.json'; inp.spellcheck = false;
+  var fl = document.createElement('label'); fl.setAttribute('for', 'toolUrl'); fl.className = 'empty'; fl.textContent = 'Tool per URL einbinden (Adresse des Tools oder seines Manifests)';
+  var inp = document.createElement('input'); inp.type = 'url'; inp.id = 'toolUrl'; inp.placeholder = 'https://tool.example/ oder …/patchbay.json'; inp.spellcheck = false;
   var err = document.createElement('p'); err.className = 'err'; err.hidden = true; err.setAttribute('role', 'alert');
   var go = document.createElement('button'); go.type = 'submit'; go.className = 'btn'; go.textContent = 'Einbinden';
   form.appendChild(fl); form.appendChild(inp); form.appendChild(err); form.appendChild(go);
+  var bridgeBtn = document.createElement('button'); bridgeBtn.type = 'button'; bridgeBtn.className = 'btn'; bridgeBtn.hidden = true; bridgeBtn.textContent = 'Stattdessen als Brücke einbinden';
+  form.appendChild(bridgeBtn);
+  bridgeBtn.addEventListener('click', function(){
+    var v = inp.value.trim(); if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+    closeMenu(); addNode('bridge', null, { url: v });
+  });
   form.addEventListener('submit', function(e){
     e.preventDefault();
-    var v = inp.value.trim(); if (!v){ err.textContent = 'Bitte die Adresse eines Patchbay-Manifests eintragen.'; err.hidden = false; return; }
-    go.disabled = true; go.textContent = 'Lade …'; err.hidden = true;
-    registerFromUrl(v).then(function(t){
+    var v = inp.value.trim(); if (!v){ err.textContent = 'Bitte die Adresse eines Tools oder seines Patchbay-Manifests eintragen.'; err.hidden = false; return; }
+    if (!/^https?:\/\//i.test(v) && !/^\//.test(v)) v = 'https://' + v;
+    go.disabled = true; go.textContent = 'Suche Manifest …'; err.hidden = true; bridgeBtn.hidden = true;
+    resolveTool(v).then(function(t){
       rememberToolUrl(t.manifestUrl); closeMenu(); addNode('tool', t);
       log('Host', t.name, 'register', 'Manifest geladen von ' + hostOf(t.manifestUrl));
     }).catch(function(ex){
-      err.textContent = ex.message; err.hidden = false; go.disabled = false; go.textContent = 'Einbinden';
+      err.textContent = ex.message + (ex.bridgeable ? ' Du kannst es trotzdem als Brücke nutzen: Bild rüberkopieren, Ergebnis zurückholen.' : '');
+      err.hidden = false; bridgeBtn.hidden = !ex.bridgeable; go.disabled = false; go.textContent = 'Einbinden';
     });
   });
   menu.appendChild(form);
@@ -1248,7 +1257,7 @@ async function registerFromUrl(url){
   if (!/^https?:/.test(abs)) throw new Error('Nur http- und https-Adressen sind erlaubt.');
   var res;
   try { res = await fetch(abs, { mode: 'cors', cache: 'no-cache' }); }
-  catch(e){ throw new Error('Manifest nicht erreichbar. Der Server muss CORS für diese Datei erlauben.'); }
+  catch(e){ throw new Error('Kein Zugriff auf ' + hostOf(abs) + ': Entweder gibt es dort kein Manifest, oder der Server erlaubt fremden Seiten keinen Zugriff (CORS).'); }
   if (!res.ok) throw new Error('Manifest nicht erreichbar (HTTP ' + res.status + ').');
   var m; try { m = await res.json(); } catch(e){ throw new Error('Die Datei ist kein JSON. Erwartet wird ein Patchbay-Manifest.'); }
   if (!validManifest(m)) throw new Error('Kein gültiges Patchbay-Manifest. Pflicht: id, name, version, entry, accepts, produces, params und modes mit „headless“.');
@@ -1262,6 +1271,26 @@ async function registerFromUrl(url){
   TOOLS.push(t); byId[t.id] = t;
   headless[t.id] = makeFrame(t, 'headless', $('frames'));
   return t;
+}
+
+function candidatesFor(input){
+  var u; try { u = new URL(input, location.href); } catch(e){ return [input]; }
+  if (/\.json$/i.test(u.pathname)) return [u.href];
+  var dir = u.origin + (u.pathname.endsWith('/') ? u.pathname : u.pathname + '/');
+  var list = [dir + 'patchbay.json', u.origin + '/.well-known/patchbay.json'];
+  return list.filter(function(x, i){ return list.indexOf(x) === i; });
+}
+async function resolveTool(input){
+  var errs = [];
+  var list = candidatesFor(input);
+  for (var i = 0; i < list.length; i++){
+    try { return await registerFromUrl(list[i]); } catch(e){ errs.push(e.message); }
+  }
+  var err = new Error(list.length > 1
+    ? 'Unter dieser Adresse spricht kein Tool Patchbay: Weder ein Manifest neben der Seite noch unter /.well-known/patchbay.json war lesbar.'
+    : errs[0]);
+  err.bridgeable = true;
+  throw err;
 }
 
 /* ---------- UI-Modus ---------- */
