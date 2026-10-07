@@ -17,7 +17,7 @@ img { max-width: 100%; }
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: Studio-Steckfeld. Kopfzeile mit Moduswahl, darunter entweder Browserfenster + Protokoll (Stufe 1) oder Node-Rack + Ausgabe (Stufe 2-3). Kabelfarben kennzeichnen Tools. */
+/* Layout: Studio-Steckfeld. Kopfzeile, Werkzeugleiste, Node-Fläche, darunter Ausgabe + Inspector. Kabelfarben kennzeichnen Tools. */
 :root {
   --bg: #E6E9EC;
   --panel: #F4F6F7;
@@ -170,7 +170,7 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 13px; padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); }
 .toast.show { opacity: 1; }
 @media (max-width: 1000px) {
-  .stage1, .outgrid { grid-template-columns: minmax(0, 1fr); }
+  .outgrid { grid-template-columns: minmax(0, 1fr); }
   .board { height: 560px; }
 }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
@@ -181,40 +181,14 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
 <div class="wrap">
   <header class="top">
     <div>
-      <div class="eyebrow">Patchbay · Protokoll v0.1 · Demo</div>
+      <div class="eyebrow">Patchbay · Protokoll v0.1 · Node-Editor</div>
       <h1>Bilder, die ihre Geschichte mitnehmen</h1>
-      <p class="lead">Vier kleine Tools, jedes in seinem eigenen abgeschotteten Frame. Sie kennen einander nicht und sprechen nur Patchbay: Paket mit Manifest, verlustfreiem Bild und kompletter Historie inklusive Prompt.</p>
-    </div>
-    <div class="modes" role="tablist" aria-label="Ausbaustufe">
-      <button role="tab" id="m1" aria-selected="true" aria-controls="v1">Stufe 1 · Übergabe</button>
-      <button role="tab" id="m2" aria-selected="false" aria-controls="v2">Stufe 2–3 · Pipeline</button>
+      <p class="lead">Vier kleine Tools, jedes in seinem eigenen abgeschotteten Frame. Sie kennen einander nicht und sprechen nur Patchbay. Steck sie als Nodes zusammen: Jedes Ergebnis trägt ein Paket mit verlustfreiem Bild und kompletter Historie inklusive Prompt.</p>
     </div>
   </header>
 
-  <section class="view" id="v1" role="tabpanel" aria-labelledby="m1">
-    <p class="note"><span>In jedem Tool auf <b>Senden</b> klicken: Das Paket wandert mit Handshake ins nächste Tool, und dessen Historie wächst um einen Schritt. Die Seite spielt dabei die Rolle des Browsers, der die Tabs verbindet.</span></p>
-    <div class="stage1">
-      <div class="browser">
-        <div class="tabstrip" role="tablist" aria-label="Geöffnete Tools" id="tabstrip"></div>
-        <div class="urlbar" id="urlbar">https://imagine.demo/?patchbay=1</div>
-        <div class="frames" id="frames1"></div>
-      </div>
-      <div class="inspector">
-        <div class="itabs" role="tablist" aria-label="Ansicht">
-          <button role="tab" aria-selected="true" data-panel="log1">Protokoll</button>
-          <button role="tab" aria-selected="false" data-panel="pkg1">Letztes Paket</button>
-        </div>
-        <div class="ipanel" id="log1"><ol class="log" id="logList1"></ol></div>
-        <div class="ipanel" id="pkg1" hidden>
-          <div class="row" style="margin-bottom:10px"><button class="btn" id="copy1">Manifest kopieren</button><button class="btn primary" id="toPipe" disabled>Als Pipeline öffnen</button></div>
-          <pre class="json" id="pkgJson">Noch kein Paket übertragen.</pre>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="view" id="v2" role="tabpanel" aria-labelledby="m2" hidden>
-    <p class="note"><span>Dieselben Tools laufen hier ohne Oberfläche als Nodes, ihre Regler baut der Host allein aus dem <b>Parameter-Schema</b>. Nodes am Kopf verschieben, ein <b>Kabel</b> vom rechten Anschluss zum linken Anschluss eines anderen Nodes ziehen, ein Kabel antippen trennt es. Neu gerechnet wird nur, was sich geändert hat.</span></p>
+  <section class="view" id="v2" aria-label="Node-Editor">
+    <p class="note"><span>Die Tools laufen ohne eigene Oberfläche als Nodes, ihre Regler baut der Host allein aus dem <b>Parameter-Schema</b>. Nodes am Kopf verschieben, ein <b>Kabel</b> vom rechten Anschluss zum linken Anschluss eines anderen Nodes ziehen, ein Kabel antippen trennt es. Neu gerechnet wird nur, was sich geändert hat.</span></p>
     <div class="toolbar">
       <div class="group"><span class="label">Presets</span>
         <button class="btn" data-preset="zeitung">Zeitung</button>
@@ -226,7 +200,6 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
         <select id="addSel"></select>
         <button class="btn" id="addBtn">Hinzufügen</button>
         <button class="btn" id="layoutBtn">Anordnen</button>
-        <button class="btn primary" id="fromPkg" disabled>Historie aus Stufe 1 laden</button>
       </div>
     </div>
     <div class="board" id="board"><div class="board-inner" id="boardInner"><svg class="wires" id="wires" aria-hidden="true"></svg></div></div>
@@ -595,7 +568,6 @@ window.addEventListener('message', function(e){
   entry.iframe.contentWindow.postMessage({ pb: 'init', v: '0.1', mode: entry.mode, theme: themeVars() }, '*', [ch.port2]);
   var stage = entry.mode === 'interactive' ? 1 : 2;
   log(stage, entry.tool.name, stage === 1 ? 'Browser' : 'Host', 'hello', 'nimmt an: ' + (d.accepts.length ? d.accepts.join(', ') : '— (Quelle)') + ' · gibt aus: ' + d.produces.join(', '));
-  if (entry.mode === 'interactive') sendTargets(entry);
   entry.resolveReady();
 });
 function request(entry, msg, transfer){
@@ -609,60 +581,10 @@ function onToolMsg(entry, d){
   if (!d || !d.pb) return;
   var key = d.id || d.rid;
   if (key && entry.pending[key] && d.pb !== 'send'){ var p = entry.pending[key]; delete entry.pending[key]; p.res(d); return; }
-  if (d.pb === 'send') route(entry, d);
 }
 function sendThemeAll(){ var t = themeVars(); frames.forEach(function(f){ if (f.port) f.port.postMessage({ pb: 'theme', theme: t }); }); }
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ setTimeout(sendThemeAll, 30); }); } catch(e){}
 new MutationObserver(function(){ setTimeout(sendThemeAll, 30); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-/* ---------- Stufe 1 ---------- */
-var tabs1 = {}, active1 = null, lastPatch = null;
-var frames1 = $('frames1'), strip = $('tabstrip');
-TOOLS.forEach(function(t, i){
-  var b = document.createElement('button'); b.setAttribute('role', 'tab'); b.id = 'tab-' + t.short;
-  b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-  var j = document.createElement('span'); j.className = 'jack'; j.style.setProperty('--c', 'var(' + t.cableVar + ')');
-  b.appendChild(j); b.appendChild(document.createTextNode(t.name));
-  b.addEventListener('click', function(){ showTab(t.id); });
-  strip.appendChild(b);
-  var entry = makeFrame(t, 'interactive', frames1);
-  entry.iframe.hidden = i !== 0;
-  tabs1[t.id] = { btn: b, entry: entry };
-});
-active1 = TOOLS[0].id;
-function showTab(id){
-  active1 = id;
-  Object.keys(tabs1).forEach(function(k){ var on = k === id; tabs1[k].btn.setAttribute('aria-selected', on ? 'true' : 'false'); tabs1[k].entry.iframe.hidden = !on; });
-  $('urlbar').textContent = 'https://' + byId[id].host + '/?patchbay=1';
-}
-function sendTargets(entry){
-  var idx = TOOLS.indexOf(entry.tool);
-  var list = TOOLS.filter(function(t){ return t !== entry.tool && t.accepts.length; }).map(function(t){ return { id: t.id, name: t.name, next: TOOLS.indexOf(t) === idx + 1 }; });
-  entry.port.postMessage({ pb: 'targets', list: list });
-}
-async function route(from, d){
-  var target = tabs1[d.to] && tabs1[d.to].entry;
-  var pk = d.patch, a = pk.manifest.assets[0];
-  log(1, from.tool.name, 'Browser', 'send', 'Ziel ' + (target ? target.tool.name : d.to) + ' · ' + a.type + ' · ' + (a.bytes / 1024).toFixed(1) + ' KB · ' + pk.history.nodes.length + ' Schritte');
-  if (!target){ log(1, 'Browser', from.tool.name, 'error', 'Ziel unbekannt'); return; }
-  await target.ready;
-  var id = uid();
-  try {
-    log(1, from.tool.name, target.tool.name, 'offer', a.type + ', ' + (a.bytes / 1024).toFixed(1) + ' KB, Vorschau des Manifests');
-    var r = await request(target, { pb: 'offer', v: '0.1', id: id, summary: { types: pk.manifest.assets.map(function(x){ return x.type; }), bytes: a.bytes, steps: pk.history.nodes.length } });
-    log(1, target.tool.name, from.tool.name, r.pb, r.reason || 'bereit');
-    if (r.pb !== 'accept') return;
-    lastPatch = { manifest: clone(pk.manifest), history: clone(pk.history) };
-    var buf = pk.assets.a1;
-    log(1, from.tool.name, target.tool.name, 'deliver', 'Manifest, Historie, Asset als ArrayBuffer (übertragen, nicht kopiert)');
-    var ack = await request(target, { pb: 'deliver', v: '0.1', id: id, patch: pk }, [buf]);
-    log(1, target.tool.name, from.tool.name, 'ack', 'Hash geprüft ' + shortHash(ack.hash));
-    showTab(target.tool.id);
-    $('pkgJson').textContent = JSON.stringify(lastPatch, null, 2);
-    $('toPipe').disabled = false; $('fromPkg').disabled = false;
-    toast('Paket an ' + target.tool.name + ' übergeben · ' + pk.history.nodes.length + ' Schritte Historie');
-  } catch(err){ log(1, 'Browser', from.tool.name, 'error', err.message); }
-}
 
 /* ---------- Inspector-Tabs ---------- */
 document.querySelectorAll('.itabs').forEach(function(bar){
@@ -672,15 +594,8 @@ document.querySelectorAll('.itabs').forEach(function(bar){
 function copyText(text, preEl){
   navigator.clipboard.writeText(text).then(function(){ toast('Kopiert'); }).catch(function(){ var r = document.createRange(); r.selectNodeContents(preEl); var s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text markiert, jetzt kopieren'); });
 }
-$('copy1').addEventListener('click', function(){ copyText($('pkgJson').textContent, $('pkgJson')); });
 $('copy2').addEventListener('click', function(){ copyText($('pkgJson2').textContent, $('pkgJson2')); });
 
-/* ---------- Modus ---------- */
-function setMode(n){ $('m1').setAttribute('aria-selected', n === 1 ? 'true' : 'false'); $('m2').setAttribute('aria-selected', n === 2 ? 'true' : 'false'); $('v1').hidden = n !== 1; $('v2').hidden = n !== 2; }
-$('m1').addEventListener('click', function(){ setMode(1); });
-$('m2').addEventListener('click', function(){ setMode(2); });
-$('toPipe').addEventListener('click', function(){ loadFromPatch(); setMode(2); });
-$('fromPkg').addEventListener('click', loadFromPatch);
 
 /* ---------- Stufe 2-3: Node-Editor ---------- */
 var headless = {};
@@ -1008,21 +923,6 @@ $('addBtn').addEventListener('click', function(){
   log(2, 'Host', 'Graph', 'add', n.tool.name + ' (' + n.key + ')');
   toast(n.tool.name + ' hinzugefügt. Kabel ziehen, um ihn zu verbinden.');
 });
-function loadFromPatch(){
-  if (!lastPatch) return;
-  var hist = lastPatch.history.nodes, ids = [];
-  hist.forEach(function(h){
-    if (!byId[h.tool.id]) return;
-    var n = firstOf(h.tool.id);
-    Object.assign(n.params, h.params || {});
-    if (h.prompt) n.params.prompt = h.prompt.text;
-    if (h.seed !== undefined) n.params.seed = h.seed;
-    if (byId[h.tool.id].op !== 'generate' && ids.indexOf(h.tool.id) < 0) ids.push(h.tool.id);
-  });
-  setChain(ids);
-  log(2, 'Paket', 'Host', 'deliver', hist.length + ' Historien-Schritte als Node-Graph geöffnet');
-  toast('Historie als Pipeline geöffnet · ' + hist.length + ' Schritte');
-}
 
 (function init(){
   var g = newNode(byId['app.demo.imagine'], 0, 0), a = newNode(byId['app.demo.posterize'], 0, 0), b = newNode(byId['app.demo.dither'], 0, 0), d = newNode(byId['app.demo.duotone'], 0, 0);
@@ -1031,14 +931,7 @@ function loadFromPatch(){
   layout([g, a, b, d]);
   buildBoard();
 })();
-$('m2').addEventListener('click', function(){ requestAnimationFrame(function(){ sizeBoard(); drawWires(); }); });
 window.addEventListener('resize', function(){ sizeBoard(); });
-function deepLink(){
-  var h = (location.hash || '').slice(1);
-  if (h === 'pipeline'){ setMode(2); requestAnimationFrame(function(){ sizeBoard(); drawWires(); }); return; }
-  var t = TOOLS.find(function(x){ return x.short === h; }); if (t){ setMode(1); showTab(t.id); }
-}
-deepLink(); window.addEventListener('hashchange', deepLink);
 Promise.all(TOOLS.map(function(t){ return headless[t.id].ready; })).then(run);
 })();
 </script>

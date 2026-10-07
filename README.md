@@ -1,9 +1,6 @@
 # Patchbay – Demo
 
-Offenes Protokoll, mit dem kleine Web-Kreativ-Tools Bilder, Vektoren, Animationen, Audio und Daten verlustfrei **samt kompletter Bearbeitungs- und Prompt-Historie** aneinander weitergeben. Die Demo zeigt:
-
-- **Stufe 1 · Übergabe** – vier Tools in abgeschotteten Frames reichen ein Paket per Handshake (`hello → offer → accept → deliver → ack`) weiter.
-- **Stufe 2–3 · Node-Pipeline** – dieselben Tools als frei verschiebbare Nodes; Regler kommen aus dem Parameter-Schema, Neuberechnung mit Cache.
+Offenes Protokoll, mit dem kleine Web-Kreativ-Tools Bilder, Vektoren, Animationen, Audio und Daten verlustfrei **samt kompletter Bearbeitungs- und Prompt-Historie** aneinander weitergeben. Die Demo ist ein **Node-Editor**: vier Tools laufen in abgeschotteten Frames und werden als frei verschiebbare Nodes verkabelt. Regler kommen aus dem Parameter-Schema der Tools, neu gerechnet wird nur, was sich geändert hat (Cache über Inhalts-Hashes). Die Kette zur Ausgabe wird zur Historie im Paket.
 
 Status: Spezifikation v0.1, Arbeitstitel „Patchbay“.
 
@@ -14,8 +11,6 @@ Status: Spezifikation v0.1, Arbeitstitel „Patchbay“.
 | `index.html` | Komplette Demo, ohne Build-Schritt |
 | `registry.json` | Tool-Register mit Manifesten (CORS offen, für Verzeichnisse und andere Hosts) |
 | `vercel.json` | Saubere URLs, Header |
-
-Deep Links: `/#pipeline`, `/#imagine`, `/#stufen`, `/#raster`, `/#duoton`.
 
 ## Auf Vercel veröffentlichen
 
