@@ -2,6 +2,14 @@
 
 Offenes Protokoll, mit dem kleine Web-Kreativ-Tools Bilder, Vektoren, Animationen, Audio und Daten verlustfrei **samt kompletter Bearbeitungs- und Prompt-Historie** aneinander weitergeben. Die Demo ist ein **Node-Editor**: vier Tools laufen in abgeschotteten Frames und werden als frei verschiebbare Nodes verkabelt. Regler kommen aus dem Parameter-Schema der Tools, neu gerechnet wird nur, was sich geändert hat (Cache über Inhalts-Hashes). Die Kette zur Ausgabe wird zur Historie im Paket.
 
+**Bedienung**
+
+- Deck: Nodes am Kopf verschieben, leere Fläche mit der Maus ziehen zum Verschieben, Strg/⌘ + Mausrad oder Pinch zum Zoomen, Klick auf die Prozentzahl passt alles ein.
+- Werkzeugleiste unten: **Neues Tool** (Tools, Presets, Anordnen, Zurücksetzen), **Notiz** (Haftnotiz auf dem Deck), **Stift** (direkt aufs Deck zeichnen, Esc beendet), Zoom, **Ausgabe** (Panel rechts).
+- Kabel vom rechten zum linken Anschluss ziehen; ein Kabel antippen trennt es.
+- Überschrift und Text liegen als bearbeitbarer Text-Node auf dem Deck.
+- Anordnung, Notizen und Striche werden im Browser gespeichert (localStorage).
+
 Status: Spezifikation v0.1, Arbeitstitel „Patchbay“.
 
 ## Struktur

@@ -3,23 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patchbay</title>
+<meta name="description" content="Offenes Protokoll für Web-Kreativ-Tools: Bilder mit kompletter Historie in einem Node-Editor verkabeln.">
 <meta name="theme-color" content="#E6E9EC">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='9' cy='16' r='6' fill='%232343D0'/%3E%3Ccircle cx='23' cy='16' r='6' fill='%23C63B2B'/%3E%3Cpath d='M9 16 C14 6 18 26 23 16' stroke='%2314181D' stroke-width='2.5' fill='none'/%3E%3C/svg%3E">
-<style>
-html { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
-body { margin: 0; -webkit-text-size-adjust: 100%; }
-img { max-width: 100%; }
-[hidden] { display: none !important; }
-</style>
-<title>Patchbay Demo</title>
-<meta name="description" content="Funktionierende Demo des offenen Patchbay-Protokolls: Bildübergabe mit Historie zwischen Web-Tools und Node-Pipeline mit Live-Neuberechnung.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: Studio-Steckfeld. Kopfzeile, Werkzeugleiste, Node-Fläche, darunter Ausgabe + Inspector. Kabelfarben kennzeichnen Tools. */
+/* Layout: Vollflächiges Deck (Punktraster) als Arbeitsfläche, Ausgabe als Panel rechts, schwebende Werkzeugleiste unten. Kabelfarben kennzeichnen Tools. */
 :root {
   --bg: #E6E9EC;
+  --deck: #EEF0F2;
+  --dot: #C3CAD1;
   --panel: #F4F6F7;
   --raised: #FFFFFF;
   --ink: #14181D;
@@ -34,92 +30,71 @@ img { max-width: 100%; }
   --cable-4: #7A3FB0;
   --good: #23845A;
   --warn: #A86A00;
+  --note: #FFF0A6;
+  --note-ink: #3A3200;
+  --note-edge: #E3CF63;
+  --shadow: 0 1px 2px rgba(20,24,29,.06), 0 10px 24px -14px rgba(20,24,29,.35);
   --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --r: 10px;
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0F1216; --panel: #161A20; --raised: #1C2128; --ink: #E3E7EB; --muted: #8E98A3; --line: #2B323B;
+    --bg: #0F1216; --deck: #12161B; --dot: #2A313A; --panel: #161A20; --raised: #1C2128; --ink: #E3E7EB; --muted: #8E98A3; --line: #2B323B;
     --accent: #8499FF; --accent-ink: #0B0F22; --accent-soft: #232B4F;
     --cable-1: #EDBE2C; --cable-2: #48B583; --cable-3: #E8644F; --cable-4: #AE7BDD; --good: #48B583; --warn: #E0A43A;
+    --note: #3D3714; --note-ink: #F6E9A6; --note-edge: #5E5420;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.7);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0F1216; --panel: #161A20; --raised: #1C2128; --ink: #E3E7EB; --muted: #8E98A3; --line: #2B323B;
+  --bg: #0F1216; --deck: #12161B; --dot: #2A313A; --panel: #161A20; --raised: #1C2128; --ink: #E3E7EB; --muted: #8E98A3; --line: #2B323B;
   --accent: #8499FF; --accent-ink: #0B0F22; --accent-soft: #232B4F;
   --cable-1: #EDBE2C; --cable-2: #48B583; --cable-3: #E8644F; --cable-4: #AE7BDD; --good: #48B583; --warn: #E0A43A;
+  --note: #3D3714; --note-ink: #F6E9A6; --note-edge: #5E5420;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.7);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
-.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 24px; }
-.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-h1 { font-family: var(--font-display); font-stretch: 125%; font-weight: 800; font-size: clamp(28px, 4.4vw, 46px); line-height: 1.05; margin: 6px 0 10px; letter-spacing: -0.01em; text-wrap: balance; }
-.lead { max-width: 64ch; color: var(--muted); margin: 0; }
-header.top { display: grid; gap: 18px; }
-.modes { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 4px; background: var(--panel); gap: 4px; flex-wrap: wrap; width: fit-content; max-width: 100%; }
-.modes button { font: 600 14px/1 var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 10px 16px; border-radius: 999px; cursor: pointer; }
-.modes button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
-button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.note { font-size: 13px; color: var(--muted); display: flex; gap: 10px; align-items: flex-start; max-width: 80ch; }
-.note b { color: var(--ink); font-weight: 600; }
-.view { display: grid; gap: 20px; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; overflow: hidden; -webkit-text-size-adjust: 100%; }
+button:focus-visible, select:focus-visible, input:focus-visible, [contenteditable]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Stufe 1 */
-.stage1 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-.browser { background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; min-width: 0; }
-.tabstrip { display: flex; gap: 2px; padding: 8px 8px 0; background: var(--panel); border-bottom: 1px solid var(--line); overflow-x: auto; }
-.tabstrip button { display: flex; align-items: center; gap: 8px; font: 500 13px/1 var(--font-body); color: var(--muted); background: transparent; border: 1px solid transparent; border-bottom: 0; padding: 10px 14px; border-radius: 8px 8px 0 0; cursor: pointer; white-space: nowrap; }
-.tabstrip button[aria-selected="true"] { background: var(--raised); color: var(--ink); border-color: var(--line); margin-bottom: -1px; }
-.jack { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 30%, transparent); flex: none; }
-.urlbar { font-family: var(--font-mono); font-size: 12px; color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.frames iframe { display: block; width: 100%; height: 780px; border: 0; background: var(--raised); }
-.inspector { background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); display: grid; grid-template-rows: auto 1fr; min-width: 0; }
-.itabs { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.itabs button { font: 600 13px/1 var(--font-body); background: transparent; color: var(--muted); border: 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-.itabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--ink); }
-.ipanel { padding: 12px 14px; min-width: 0; }
-.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-family: var(--font-mono); font-size: 12px; max-height: 620px; overflow: auto; }
-.log li { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; padding: 6px 4px; border-bottom: 1px dashed var(--line); }
-.log time { color: var(--muted); font-variant-numeric: tabular-nums; }
-.log .msg { min-width: 0; overflow-wrap: anywhere; }
-.chip { display: inline-block; font: 600 11px/1 var(--font-mono); padding: 3px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--ink); margin-right: 6px; letter-spacing: .02em; }
-.chip.k-deliver, .chip.k-result { background: color-mix(in srgb, var(--good) 22%, transparent); }
-.chip.k-reject, .chip.k-error { background: color-mix(in srgb, var(--cable-3) 25%, transparent); }
-.chip.k-cache { background: color-mix(in srgb, var(--warn) 25%, transparent); }
-.route { color: var(--muted); }
-pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 0; max-height: 560px; overflow: auto; white-space: pre; }
-.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.btn { font: 600 13px/1 var(--font-body); border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 9px 12px; border-radius: 8px; cursor: pointer; }
-.btn:hover { border-color: var(--muted); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
-.empty { color: var(--muted); font-size: 13px; }
+/* App-Gerüst */
+.app { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr) 380px; padding-top: env(safe-area-inset-top, 0px); }
+.app.no-side { grid-template-columns: minmax(0, 1fr); }
+.app.no-side .side { display: none; }
+.stage { position: relative; min-width: 0; min-height: 0; }
 
-/* Stufe 2-3 */
-.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
-.toolbar .group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.toolbar .label { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-.board { position: relative; height: 660px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r); background-color: var(--panel); background-image: radial-gradient(color-mix(in srgb, var(--muted) 35%, transparent) 1px, transparent 1.2px); background-size: 20px 20px; overscroll-behavior: contain; }
-.board-inner { position: relative; min-width: 100%; min-height: 100%; }
-.wires { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+/* Deck */
+.board { position: absolute; inset: 0; overflow: auto; background-color: var(--deck); background-image: radial-gradient(var(--dot) 1px, transparent 1.3px); background-size: 20px 20px; overscroll-behavior: contain; }
+.board.panning { cursor: grabbing; }
+.sizer { position: relative; }
+.plane { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.wires, .ink { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.ink { z-index: 100000; }
+.penlayer { position: absolute; inset: 0; z-index: 100001; cursor: crosshair; touch-action: none; }
 .wire { fill: none; stroke-width: 3.5; stroke-linecap: round; pointer-events: none; }
 .wire.temp { stroke-dasharray: 6 6; }
 .wire-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
 .wire-hit:hover + .wire { stroke-width: 5.5; }
-.node { position: absolute; background: var(--raised); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--r); padding: 0 12px 12px; display: grid; gap: 10px; align-content: start; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.35); }
+.ink-stroke { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Nodes */
+.node { position: absolute; background: var(--raised); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--r); padding: 0 12px 12px; display: grid; gap: 10px; align-content: start; box-shadow: var(--shadow); }
 .node.dragging { box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 22px 40px -16px rgba(0,0,0,.45); }
 .node.bypass .params, .node.bypass .thumb { opacity: .5; }
 .node.bypass .params { pointer-events: none; }
-.node .handle { display: flex; align-items: center; gap: 8px; padding: 10px 0 2px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.handle { display: flex; align-items: center; gap: 8px; padding: 10px 0 2px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
 .node.dragging .handle { cursor: grabbing; }
 .node h3 { margin: 0; font: 700 15px/1.2 var(--font-display); font-stretch: 110%; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .node .ver { font: 500 11px/1 var(--font-mono); color: var(--muted); }
 .node .job { font-size: 12px; color: var(--muted); margin-top: -6px; }
+.jack { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 30%, transparent); flex: none; }
 .port { position: absolute; top: 14px; width: 18px; height: 18px; border-radius: 50%; background: var(--raised); border: 3px solid var(--c); cursor: crosshair; touch-action: none; z-index: 2; }
 .port::after { content: ""; position: absolute; inset: -10px; border-radius: 50%; }
 .port.in { left: -10px; }
@@ -128,10 +103,9 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
 .port.in.on { border-color: var(--line); background: var(--muted); }
 .port:hover { transform: scale(1.2); }
 .board.wiring .port.in { box-shadow: 0 0 0 4px var(--accent-soft); }
-.delbtn { font: 600 14px/1 var(--font-mono); border: 0; background: transparent; color: var(--muted); width: 24px; height: 24px; border-radius: 6px; cursor: pointer; }
+.delbtn { font: 600 15px/1 var(--font-mono); border: 0; background: transparent; color: var(--muted); width: 24px; height: 24px; border-radius: 6px; cursor: pointer; flex: none; }
 .delbtn:hover { background: var(--panel); color: var(--ink); }
-.toolbar select { font: 13px/1 var(--font-body); padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
-.thumb { width: 100%; aspect-ratio: 1; max-width: 100%; border-radius: 6px; background: var(--panel); display: block; image-rendering: auto; }
+.thumb { width: 100%; aspect-ratio: 1; max-width: 100%; border-radius: 6px; background: var(--panel); display: block; }
 .params { display: grid; gap: 10px; }
 .field { display: grid; gap: 4px; }
 .field label { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
@@ -145,19 +119,78 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
 .status { font-variant-numeric: tabular-nums; }
 .status.cache { color: var(--warn); }
 .status.live { color: var(--good); }
-.ctrls { display: flex; gap: 4px; }
-.iconbtn { font: 600 12px/1 var(--font-mono); border: 1px solid var(--line); background: var(--panel); color: var(--ink); width: 28px; height: 26px; border-radius: 6px; cursor: pointer; }
-.iconbtn:disabled { opacity: .35; cursor: not-allowed; }
 .switch { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
 .switch input { accent-color: var(--accent); }
-.outgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
-.outbox { background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; }
-.outbox h2 { margin: 0; font: 700 18px/1.2 var(--font-display); font-stretch: 115%; }
-#out { width: 100%; max-width: 100%; aspect-ratio: 1; border-radius: 6px; background: var(--panel); display: block; }
-.meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-family: var(--font-mono); font-size: 12px; }
+.btn { font: 600 13px/1 var(--font-body); border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+
+/* Text-Node */
+.node.textnode { background: transparent; border: 1px dashed transparent; border-top: 1px dashed transparent; box-shadow: none; padding: 0 12px 12px; gap: 6px; }
+.node.textnode:hover, .node.textnode:focus-within, .node.textnode.dragging { border-color: var(--line); background: color-mix(in srgb, var(--deck) 70%, transparent); }
+.textnode .handle { padding: 6px 0 0; color: var(--muted); font: 500 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; opacity: 0; transition: opacity .15s; }
+.textnode:hover .handle, .textnode:focus-within .handle, .textnode.dragging .handle { opacity: 1; }
+.grip { width: 18px; height: 10px; background-image: radial-gradient(currentColor 1.2px, transparent 1.4px); background-size: 6px 5px; opacity: .7; }
+.tn-eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tn-title { margin: 0; font-family: var(--font-display); font-stretch: 125%; font-weight: 800; font-size: 44px; line-height: 1.04; letter-spacing: -0.01em; text-wrap: balance; outline-offset: 4px; }
+.tn-body { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 60ch; outline-offset: 4px; }
+
+/* Notiz */
+.node.note { background: var(--note); color: var(--note-ink); border: 1px solid var(--note-edge); border-top: 1px solid var(--note-edge); border-radius: 4px 4px 14px 4px; padding: 0 12px 14px; gap: 6px; }
+.note .handle { padding: 8px 0 0; font: 600 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.note .handle span:first-of-type { flex: 1; }
+.note .delbtn { color: inherit; opacity: .7; }
+.note .delbtn:hover { background: color-mix(in srgb, var(--note-ink) 12%, transparent); color: inherit; opacity: 1; }
+.note-body { min-height: 96px; font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; outline-offset: 4px; }
+.note-body:empty::before { content: attr(data-placeholder); opacity: .55; }
+
+/* Werkzeugleiste */
+.dock { position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 4px; padding: 6px; background: var(--raised); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); max-width: calc(100% - 24px); }
+.dock .sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
+.tbtn { display: inline-flex; align-items: center; gap: 7px; font: 600 13px/1 var(--font-body); color: var(--ink); background: transparent; border: 0; padding: 9px 11px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+.tbtn svg { width: 17px; height: 17px; flex: none; }
+.tbtn:hover { background: var(--panel); }
+.tbtn[aria-pressed="true"], .tbtn[aria-expanded="true"] { background: var(--accent-soft); }
+.tbtn.primary { background: var(--accent); color: var(--accent-ink); }
+.tbtn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
+.tbtn.sq { padding: 9px; }
+.zoomval { font: 500 12px/1 var(--font-mono); color: var(--muted); min-width: 48px; text-align: center; border: 0; background: transparent; cursor: pointer; padding: 9px 4px; border-radius: 8px; font-variant-numeric: tabular-nums; }
+.zoomval:hover { background: var(--panel); color: var(--ink); }
+.penopts { display: flex; align-items: center; gap: 4px; padding-left: 4px; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--raised); box-shadow: 0 0 0 1px var(--line); background: var(--sw); cursor: pointer; padding: 0; }
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.menuwrap { position: relative; }
+.menu { position: absolute; left: 0; bottom: calc(100% + 10px); width: 300px; max-height: min(70vh, 520px); overflow: auto; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 8px; display: grid; gap: 2px; }
+.menu h4 { margin: 8px 8px 4px; font: 500 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.menu button { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 2px 10px; align-items: center; text-align: left; font: 600 14px/1.25 var(--font-body); color: var(--ink); background: transparent; border: 0; padding: 9px 8px; border-radius: 8px; cursor: pointer; }
+.menu button:hover { background: var(--panel); }
+.menu button small { grid-column: 2; font-weight: 400; font-size: 12px; color: var(--muted); }
+.menu button.plain { grid-template-columns: minmax(0, 1fr); font-weight: 500; }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 6px 4px; width: auto; }
+
+/* Ausgabe-Panel */
+.side { background: var(--raised); border-left: 1px solid var(--line); overflow: auto; display: flex; flex-direction: column; gap: 14px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); min-width: 0; }
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.side-head h2 { margin: 0; font: 700 18px/1.2 var(--font-display); font-stretch: 115%; }
+.side-head .tag { font: 500 11px/1 var(--font-mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+#out { width: 100%; max-width: 100%; aspect-ratio: 1; border-radius: 8px; background: var(--panel); display: block; flex: none; }
+.meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-family: var(--font-mono); font-size: 12px; margin: 0; }
 .meta dt { color: var(--muted); }
 .meta dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
-.hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.itabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 8px; flex-wrap: wrap; }
+.itabs button { font: 600 13px/1 var(--font-body); background: transparent; color: var(--muted); border: 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.itabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--ink); }
+.ipanel { min-width: 0; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-family: var(--font-mono); font-size: 12px; }
+.log li { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; padding: 6px 2px; border-bottom: 1px dashed var(--line); }
+.log time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.log .msg { min-width: 0; overflow-wrap: anywhere; }
+.chip { display: inline-block; font: 600 11px/1 var(--font-mono); padding: 3px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--ink); margin-right: 6px; }
+.chip.k-result { background: color-mix(in srgb, var(--good) 22%, transparent); }
+.chip.k-error { background: color-mix(in srgb, var(--cable-3) 25%, transparent); }
+.chip.k-cache { background: color-mix(in srgb, var(--warn) 25%, transparent); }
+.route { color: var(--muted); }
+pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 0; overflow: auto; white-space: pre; max-height: 60vh; }
+.hist { list-style: none; margin: 0; padding: 0; display: grid; }
 .hist li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; position: relative; padding-bottom: 14px; }
 .hist li:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 16px; bottom: 0; width: 2px; background: var(--line); }
 .hist .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--c); border: 3px solid var(--raised); box-shadow: 0 0 0 1px var(--line); }
@@ -166,66 +199,89 @@ pre.json { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; bac
 .repro { font: 600 11px/1 var(--font-mono); padding: 3px 6px; border-radius: 4px; margin-left: 6px; background: var(--accent-soft); }
 .repro.exact { background: color-mix(in srgb, var(--good) 22%, transparent); }
 .repro.seeded { background: color-mix(in srgb, var(--warn) 22%, transparent); }
+.empty { color: var(--muted); font-size: 13px; margin: 0; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
 .hidden-frames { position: absolute; width: 1px; height: 1px; overflow: hidden; left: -9999px; top: 0; }
-.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 13px; padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); }
+.toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 13px; padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); z-index: 300000; }
 .toast.show { opacity: 1; }
-@media (max-width: 1000px) {
-  .outgrid { grid-template-columns: minmax(0, 1fr); }
-  .board { height: 560px; }
+
+@media (max-width: 820px) {
+  .app, .app.no-side { grid-template-columns: minmax(0, 1fr); }
+  .side { position: fixed; left: 0; right: 0; bottom: 0; height: 72vh; z-index: 200000; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; box-shadow: 0 -20px 40px -20px rgba(0,0,0,.4); }
+  .tbtn .lbl { display: none; }
+  .tbtn { padding: 9px; }
+  .zoomval { min-width: 42px; }
+  .menu { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: auto; }
 }
-@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .toast, .textnode .handle { transition: none; } }
 </style>
 </head>
 <body>
-
-<div class="wrap">
-  <header class="top">
-    <div>
-      <div class="eyebrow">Patchbay · Protokoll v0.1 · Node-Editor</div>
-      <h1>Bilder, die ihre Geschichte mitnehmen</h1>
-      <p class="lead">Vier kleine Tools, jedes in seinem eigenen abgeschotteten Frame. Sie kennen einander nicht und sprechen nur Patchbay. Steck sie als Nodes zusammen: Jedes Ergebnis trägt ein Paket mit verlustfreiem Bild und kompletter Historie inklusive Prompt.</p>
-    </div>
-  </header>
-
-  <section class="view" id="v2" aria-label="Node-Editor">
-    <p class="note"><span>Die Tools laufen ohne eigene Oberfläche als Nodes, ihre Regler baut der Host allein aus dem <b>Parameter-Schema</b>. Nodes am Kopf verschieben, ein <b>Kabel</b> vom rechten Anschluss zum linken Anschluss eines anderen Nodes ziehen, ein Kabel antippen trennt es. Neu gerechnet wird nur, was sich geändert hat.</span></p>
-    <div class="toolbar">
-      <div class="group"><span class="label">Presets</span>
-        <button class="btn" data-preset="zeitung">Zeitung</button>
-        <button class="btn" data-preset="siebdruck">Siebdruck</button>
-        <button class="btn" data-preset="handheld">Handheld</button>
-      </div>
-      <div class="group">
-        <label class="label" for="addSel">Node</label>
-        <select id="addSel"></select>
-        <button class="btn" id="addBtn">Hinzufügen</button>
-        <button class="btn" id="layoutBtn">Anordnen</button>
-      </div>
-    </div>
-    <div class="board" id="board"><div class="board-inner" id="boardInner"><svg class="wires" id="wires" aria-hidden="true"></svg></div></div>
-    <div class="outgrid">
-      <div class="outbox">
-        <h2>Ausgabe</h2>
-        <canvas id="out" width="360" height="360" aria-label="Ergebnis der Pipeline"></canvas>
-        <dl class="meta" id="outMeta"></dl>
-      </div>
-      <div class="inspector">
-        <div class="itabs" role="tablist" aria-label="Ansicht">
-          <button role="tab" aria-selected="true" data-panel="hist2">Historie</button>
-          <button role="tab" aria-selected="false" data-panel="pkg2">Manifest</button>
-          <button role="tab" aria-selected="false" data-panel="log2">Protokoll</button>
+<div class="app" id="app">
+  <main class="stage">
+    <div class="board" id="board" aria-label="Deck">
+      <div class="sizer" id="sizer">
+        <div class="plane" id="plane">
+          <svg class="wires" id="wires" aria-hidden="true"></svg>
+          <svg class="ink" id="ink" aria-hidden="true"></svg>
+          <div class="penlayer" id="penLayer" hidden></div>
         </div>
-        <div class="ipanel" id="hist2"><ol class="hist" id="histList"></ol></div>
-        <div class="ipanel" id="pkg2" hidden>
-          <div class="row" style="margin-bottom:10px"><button class="btn" id="copy2">Manifest kopieren</button></div>
-          <pre class="json" id="pkgJson2"></pre>
-        </div>
-        <div class="ipanel" id="log2" hidden><ol class="log" id="logList2"></ol></div>
       </div>
     </div>
-  </section>
+    <nav class="dock" role="toolbar" aria-label="Werkzeuge">
+      <div class="menuwrap" id="menuWrap">
+        <button class="tbtn primary" id="toolBtn" aria-haspopup="true" aria-expanded="false" aria-controls="toolMenu" title="Neues Tool">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Neues Tool</span>
+        </button>
+        <div class="menu" id="toolMenu" role="menu" hidden></div>
+      </div>
+      <button class="tbtn" id="noteBtn" title="Notiz hinzufügen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5"/></svg><span class="lbl">Notiz</span>
+      </button>
+      <button class="tbtn" id="penBtn" aria-pressed="false" title="Stift: direkt aufs Deck zeichnen (Esc beendet)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span class="lbl">Stift</span>
+      </button>
+      <div class="penopts" id="penOpts" hidden>
+        <button class="swatch" data-color="--ink" aria-pressed="true" aria-label="Farbe Tinte" style="--sw: var(--ink)"></button>
+        <button class="swatch" data-color="--accent" aria-pressed="false" aria-label="Farbe Blau" style="--sw: var(--accent)"></button>
+        <button class="swatch" data-color="--cable-3" aria-pressed="false" aria-label="Farbe Rot" style="--sw: var(--cable-3)"></button>
+        <button class="tbtn sq" id="undoBtn" title="Letzten Strich entfernen" aria-label="Letzten Strich entfernen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>
+        </button>
+        <button class="tbtn" id="clearBtn" title="Alle Striche löschen"><span>Leeren</span></button>
+      </div>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="tbtn sq" id="zoomOut" title="Verkleinern" aria-label="Verkleinern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+      <button class="zoomval" id="zoomVal" title="Alles einpassen">100%</button>
+      <button class="tbtn sq" id="zoomIn" title="Vergrößern" aria-label="Vergrößern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button class="tbtn" id="panelBtn" aria-pressed="true" title="Ausgabe-Panel ein- oder ausblenden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg><span class="lbl">Ausgabe</span>
+      </button>
+    </nav>
+  </main>
+
+  <aside class="side" id="side" aria-label="Ausgabe">
+    <div class="side-head">
+      <div><div class="tag">Paket · Patchbay 0.1</div><h2>Ausgabe</h2></div>
+      <button class="delbtn" id="sideClose" aria-label="Panel schließen">×</button>
+    </div>
+    <canvas id="out" width="360" height="360" aria-label="Ergebnis der Pipeline"></canvas>
+    <dl class="meta" id="outMeta"></dl>
+    <div class="itabs" role="tablist" aria-label="Ansicht">
+      <button role="tab" aria-selected="true" data-panel="hist2">Historie</button>
+      <button role="tab" aria-selected="false" data-panel="pkg2">Manifest</button>
+      <button role="tab" aria-selected="false" data-panel="log2">Protokoll</button>
+    </div>
+    <div class="ipanel" id="hist2"><ol class="hist" id="histList"></ol></div>
+    <div class="ipanel" id="pkg2" hidden>
+      <div class="row"><button class="btn" id="copy2">Manifest kopieren</button></div>
+      <pre class="json" id="pkgJson2"></pre>
+    </div>
+    <div class="ipanel" id="log2" hidden><ol class="log" id="logList"></ol></div>
+  </aside>
 </div>
-<div class="hidden-frames" id="frames2" aria-hidden="true"></div>
+<div class="hidden-frames" id="frames" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script type="text/plain" id="tool-css">
@@ -489,20 +545,20 @@ parent.postMessage({ pb: 'hello', v: '0.1', tool: { id: M.id, version: M.version
 (function(){
 'use strict';
 var TOOLS = [
-  { id: 'app.demo.imagine', short: 'imagine', name: 'Imagine', job: 'Bild aus Prompt (simuliertes Modell)', version: '0.3.0', cableVar: '--cable-1', host: 'imagine.demo',
+  { id: 'app.demo.imagine', short: 'imagine', name: 'Imagine', job: 'Bild aus Prompt (simuliertes Modell)', version: '0.3.0', cableVar: '--cable-1',
     accepts: [], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'generate', repro: 'seeded',
     params: [ { id: 'prompt', type: 'prompt', label: 'Prompt', default: 'Kreise über Streifen, Abenddämmerung' },
               { id: 'seed', type: 'seed', label: 'Seed', default: 421337 },
               { id: 'density', type: 'int', label: 'Dichte', min: 3, max: 16, step: 1, default: 8 } ] },
-  { id: 'app.demo.posterize', short: 'stufen', name: 'Stufen', job: 'Farben auf wenige Stufen reduzieren', version: '1.2.0', cableVar: '--cable-2', host: 'stufen.demo',
+  { id: 'app.demo.posterize', short: 'stufen', name: 'Stufen', job: 'Farben auf wenige Stufen reduzieren', version: '1.2.0', cableVar: '--cable-2',
     accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'transform', repro: 'exact',
     params: [ { id: 'levels', type: 'int', label: 'Stufen', min: 2, max: 10, step: 1, default: 4 },
               { id: 'contrast', type: 'number', label: 'Kontrast', min: -50, max: 50, step: 1, default: 10 } ] },
-  { id: 'app.demo.dither', short: 'raster', name: 'Raster', job: 'Dithering in Schwarz-Weiß', version: '2.1.0', cableVar: '--cable-3', host: 'raster.demo',
+  { id: 'app.demo.dither', short: 'raster', name: 'Raster', job: 'Dithering in Schwarz-Weiß', version: '2.1.0', cableVar: '--cable-3',
     accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'transform', repro: 'exact',
     params: [ { id: 'algorithm', type: 'enum', label: 'Verfahren', options: ['atkinson', 'floyd', 'bayer'], labels: { atkinson: 'Atkinson', floyd: 'Floyd-Steinberg', bayer: 'Bayer 4×4' }, default: 'atkinson' },
               { id: 'scale', type: 'int', label: 'Pixelgröße', min: 1, max: 5, step: 1, default: 2 } ] },
-  { id: 'app.demo.duotone', short: 'duoton', name: 'Duoton', job: 'Helligkeit auf zwei Farben abbilden', version: '1.0.4', cableVar: '--cable-4', host: 'duoton.demo',
+  { id: 'app.demo.duotone', short: 'duoton', name: 'Duoton', job: 'Helligkeit auf zwei Farben abbilden', version: '1.0.4', cableVar: '--cable-4',
     accepts: ['image/*'], produces: ['image/png'], modes: ['interactive', 'headless'], deterministic: true, op: 'transform', repro: 'exact',
     params: [ { id: 'dark', type: 'color', label: 'Dunkel', default: '#1b2a6b' },
               { id: 'light', type: 'color', label: 'Hell', default: '#f6f0e4' } ] }
@@ -514,21 +570,16 @@ var css = function(v){ return getComputedStyle(document.documentElement).getProp
 function themeVars(){ var o = {}; THEME_VARS.forEach(function(v){ o[v] = css(v); }); return o; }
 function uid(){ return Math.random().toString(36).slice(2, 10); }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
-function shortHash(h){ return h ? h.replace(/^(sha256-|fnv-)/, '$1').slice(0, 15) + '…' : '–'; }
-var toastT; function toast(msg){ var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, 1800); }
-
+function shortHash(h){ return h ? h.slice(0, 15) + '…' : '–'; }
+var toastT; function toast(msg){ var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, 2000); }
 async function hashBuf(buf){
   try { var d = await crypto.subtle.digest('SHA-256', buf); return 'sha256-' + Array.from(new Uint8Array(d)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join(''); }
   catch(e){ var u = new Uint8Array(buf), h1 = 0x811c9dc5, h2 = 0x9747b28c; for (var i = 0; i < u.length; i++){ h1 = Math.imul(h1 ^ u[i], 16777619) >>> 0; h2 = Math.imul(h2 ^ u[i], 2246822507) >>> 0; } return 'fnv-' + h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0'); }
 }
 
-/* ---------- Logs ---------- */
-var logs = { 1: [], 2: [] };
-function log(stage, from, to, type, detail){
-  var now = new Date(), t = now.toTimeString().slice(0, 8);
-  logs[stage].unshift({ t: t, from: from, to: to, type: type, detail: detail || '' });
-  if (logs[stage].length > 120) logs[stage].pop();
-  var ul = $(stage === 1 ? 'logList1' : 'logList2');
+/* ---------- Protokoll ---------- */
+function log(from, to, type, detail){
+  var t = new Date().toTimeString().slice(0, 8), ul = $('logList');
   var li = document.createElement('li');
   var tm = document.createElement('time'); tm.textContent = t;
   var m = document.createElement('div'); m.className = 'msg';
@@ -537,10 +588,10 @@ function log(stage, from, to, type, detail){
   m.appendChild(chip); m.appendChild(r);
   if (detail){ var dd = document.createElement('div'); dd.textContent = detail; m.appendChild(dd); }
   li.appendChild(tm); li.appendChild(m); ul.insertBefore(li, ul.firstChild);
-  while (ul.children.length > 120) ul.removeChild(ul.lastChild);
+  while (ul.children.length > 150) ul.removeChild(ul.lastChild);
 }
 
-/* ---------- Frames ---------- */
+/* ---------- Tool-Frames ---------- */
 var TOOL_CSS = $('tool-css').textContent, RUNTIME = $('tool-runtime').textContent;
 var FONT_LINK = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">';
 function manifestOf(t){ return { id: t.id, name: t.name, job: t.job, version: t.version, accepts: t.accepts, produces: t.produces, modes: t.modes, deterministic: t.deterministic, op: t.op, repro: t.repro, params: t.params, cable: css(t.cableVar) }; }
@@ -548,11 +599,11 @@ function srcdoc(t){
   return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + FONT_LINK +
     '<style>' + TOOL_CSS + '</style></head><body><script>window.MANIFEST=' + JSON.stringify(manifestOf(t)).replace(/</g, '\\u003c') + ';<\/script><script>' + RUNTIME + '<\/script></body></html>';
 }
-var frames = []; // {tool, mode, iframe, port, ready, pending}
+var frames = [];
 function makeFrame(t, mode, parent){
   var f = document.createElement('iframe');
   f.setAttribute('sandbox', 'allow-scripts');
-  f.setAttribute('title', t.name + (mode === 'headless' ? ' (Node)' : ''));
+  f.setAttribute('title', t.name + ' (Node)');
   f.srcdoc = srcdoc(t);
   var entry = { tool: t, mode: mode, iframe: f, port: null, pending: {} };
   entry.ready = new Promise(function(res){ entry.resolveReady = res; });
@@ -566,8 +617,7 @@ window.addEventListener('message', function(e){
   var ch = new MessageChannel(); entry.port = ch.port1;
   ch.port1.onmessage = function(ev){ onToolMsg(entry, ev.data); };
   entry.iframe.contentWindow.postMessage({ pb: 'init', v: '0.1', mode: entry.mode, theme: themeVars() }, '*', [ch.port2]);
-  var stage = entry.mode === 'interactive' ? 1 : 2;
-  log(stage, entry.tool.name, stage === 1 ? 'Browser' : 'Host', 'hello', 'nimmt an: ' + (d.accepts.length ? d.accepts.join(', ') : '— (Quelle)') + ' · gibt aus: ' + d.produces.join(', '));
+  log(entry.tool.name, 'Host', 'hello', 'nimmt an: ' + (d.accepts.length ? d.accepts.join(', ') : '— (Quelle)') + ' · gibt aus: ' + d.produces.join(', '));
   entry.resolveReady();
 });
 function request(entry, msg, transfer){
@@ -580,42 +630,65 @@ function request(entry, msg, transfer){
 function onToolMsg(entry, d){
   if (!d || !d.pb) return;
   var key = d.id || d.rid;
-  if (key && entry.pending[key] && d.pb !== 'send'){ var p = entry.pending[key]; delete entry.pending[key]; p.res(d); return; }
+  if (key && entry.pending[key]){ var p = entry.pending[key]; delete entry.pending[key]; p.res(d); }
 }
-function sendThemeAll(){ var t = themeVars(); frames.forEach(function(f){ if (f.port) f.port.postMessage({ pb: 'theme', theme: t }); }); }
-try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ setTimeout(sendThemeAll, 30); }); } catch(e){}
-new MutationObserver(function(){ setTimeout(sendThemeAll, 30); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-/* ---------- Inspector-Tabs ---------- */
-document.querySelectorAll('.itabs').forEach(function(bar){
-  var btns = bar.querySelectorAll('button');
-  btns.forEach(function(b){ b.addEventListener('click', function(){ btns.forEach(function(x){ var on = x === b; x.setAttribute('aria-selected', on ? 'true' : 'false'); $(x.dataset.panel).hidden = !on; }); }); });
-});
-function copyText(text, preEl){
-  navigator.clipboard.writeText(text).then(function(){ toast('Kopiert'); }).catch(function(){ var r = document.createRange(); r.selectNodeContents(preEl); var s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text markiert, jetzt kopieren'); });
-}
-$('copy2').addEventListener('click', function(){ copyText($('pkgJson2').textContent, $('pkgJson2')); });
-
-
-/* ---------- Stufe 2-3: Node-Editor ---------- */
 var headless = {};
-TOOLS.forEach(function(t){ headless[t.id] = makeFrame(t, 'headless', $('frames2')); });
-var SVGNS = 'http://www.w3.org/2000/svg';
-var board = $('board'), inner = $('boardInner'), wires = $('wires');
-var nodes = [], edges = [], cache = new Map(), seq = 0, zTop = 10, temp = null;
-var NW = 210, OW = 236, PORT_Y = 27;
+TOOLS.forEach(function(t){ headless[t.id] = makeFrame(t, 'headless', $('frames')); });
 
-function newNode(tool, x, y){
-  var p = {}; if (tool) tool.params.forEach(function(q){ p[q.id] = q.default; });
-  var n = { key: tool ? tool.short + '-' + (++seq) : 'out', tool: tool, kind: tool ? 'tool' : 'output', params: p, x: x, y: y, w: tool ? NW : OW, bypass: false, out: null, inHash: null, status: '' };
+/* ---------- Deck: Zustand ---------- */
+var SVGNS = 'http://www.w3.org/2000/svg';
+var narrow = matchMedia('(max-width: 820px)');
+var app = $('app'), board = $('board'), sizer = $('sizer'), plane = $('plane'), wires = $('wires'), ink = $('ink'), penLayer = $('penLayer');
+var nodes = [], edges = [], strokes = [], cache = new Map(), seq = 0, zTop = 10, temp = null, scale = 1;
+var NW = 210, OW = 236, TW = 620, NOTEW = 230, PORT_Y = 27;
+var DEFAULT_TITLE = 'Bilder, die ihre Geschichte mitnehmen';
+var DEFAULT_BODY = 'Vier kleine Tools, jedes in seinem eigenen abgeschotteten Frame. Sie kennen einander nicht und sprechen nur Patchbay. Steck sie als Nodes zusammen: Jedes Ergebnis trägt ein Paket mit verlustfreiem Bild und kompletter Historie inklusive Prompt.';
+
+function widthOf(kind){ return kind === 'tool' ? NW : kind === 'output' ? OW : kind === 'text' ? TW : NOTEW; }
+function newNode(kind, tool, x, y){
+  var n = { key: kind === 'output' ? 'out' : (tool ? tool.short : kind) + '-' + (++seq), kind: kind, tool: tool || null, params: {}, x: Math.round(x), y: Math.round(y), w: widthOf(kind), bypass: false, out: null, inHash: null, status: '' };
+  if (tool) tool.params.forEach(function(q){ n.params[q.id] = q.default; });
   nodes.push(n); return n;
 }
 function nodeBy(k){ return nodes.find(function(n){ return n.key === k; }); }
 function srcOf(n){ var e = edges.find(function(e){ return e.to === n.key; }); return e ? nodeBy(e.from) : null; }
 function cableOf(n){ return n.tool ? n.tool.cableVar : '--accent'; }
-function label(n){ return n.tool ? n.tool.name : 'Ausgabe'; }
-function hasIn(n){ return n.kind === 'output' || n.tool.op !== 'generate'; }
+function label(n){ return n.tool ? n.tool.name : n.kind === 'output' ? 'Ausgabe' : n.kind === 'note' ? 'Notiz' : 'Text'; }
+function isPipe(n){ return n.kind === 'tool' || n.kind === 'output'; }
+function hasIn(n){ return n.kind === 'output' || (n.kind === 'tool' && n.tool.op !== 'generate'); }
 
+/* ---------- Speichern im Browser ---------- */
+var STORE = 'patchbay.deck.v1', saveT = null;
+function save(){
+  clearTimeout(saveT);
+  saveT = setTimeout(function(){
+    try {
+      localStorage.setItem(STORE, JSON.stringify({ v: 1, seq: seq, edges: edges, strokes: strokes,
+        nodes: nodes.map(function(n){ return { key: n.key, kind: n.kind, tool: n.tool ? n.tool.id : null, params: n.params, x: n.x, y: n.y, bypass: n.bypass, title: n.title, body: n.body, text: n.text }; }) }));
+    } catch(e){}
+  }, 300);
+}
+function load(){
+  try {
+    var d = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (!d || d.v !== 1 || !Array.isArray(d.nodes)) return false;
+    nodes = []; seq = d.seq || 0;
+    d.nodes.forEach(function(s){
+      if (s.kind === 'tool' && !byId[s.tool]) return;
+      var n = newNode(s.kind, s.tool ? byId[s.tool] : null, s.x || 0, s.y || 0);
+      n.key = s.key; Object.assign(n.params, s.params || {}); n.bypass = !!s.bypass;
+      if (s.kind === 'text'){ n.title = s.title || ''; n.body = s.body || ''; }
+      if (s.kind === 'note') n.text = s.text || '';
+    });
+    seq = Math.max(seq, d.seq || 0);
+    if (!nodeBy('out')) newNode('output', null, 900, 260);
+    edges = (d.edges || []).filter(function(e){ return nodeBy(e.from) && nodeBy(e.to); });
+    strokes = Array.isArray(d.strokes) ? d.strokes : [];
+    return true;
+  } catch(e){ return false; }
+}
+
+/* ---------- Felder aus dem Parameter-Schema ---------- */
 function buildField(n, p){
   var f = document.createElement('div'); f.className = 'field';
   var id = 'r-' + n.key + '-' + p.id;
@@ -652,77 +725,152 @@ function buildField(n, p){
   return f;
 }
 
+/* ---------- Nodes bauen ---------- */
+function editable(el, placeholder, onText){
+  el.setAttribute('contenteditable', 'true'); el.spellcheck = false;
+  if (placeholder) el.setAttribute('data-placeholder', placeholder);
+  el.addEventListener('input', function(){ onText(el.innerText.replace(/\n$/, '')); save(); sizeBoard(); });
+  el.addEventListener('paste', function(e){ e.preventDefault(); var t = (e.clipboardData || window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); });
+  el.addEventListener('keydown', function(e){ if (e.key === 'Escape') el.blur(); });
+}
+function delButton(n){
+  var del = document.createElement('button'); del.className = 'delbtn'; del.type = 'button'; del.textContent = '×'; del.setAttribute('aria-label', label(n) + ' entfernen');
+  del.addEventListener('click', function(){ removeNode(n); });
+  return del;
+}
 function buildNode(n){
   var el = document.createElement('article');
-  el.className = 'node' + (n.bypass ? ' bypass' : '');
   el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; el.style.width = n.w + 'px';
-  el.style.setProperty('--c', 'var(' + cableOf(n) + ')');
-  el.setAttribute('aria-label', 'Node ' + label(n));
-  n.inPort = n.outPort = null;
-  if (hasIn(n)){
-    var pi = document.createElement('span'); pi.className = 'port in'; pi.dataset.key = n.key; pi.title = 'Eingang';
-    pi.addEventListener('pointerdown', function(e){ startFromIn(e, n); });
-    el.appendChild(pi); n.inPort = pi;
-  }
-  if (n.kind === 'tool'){
-    var po = document.createElement('span'); po.className = 'port out'; po.title = 'Ausgang: Kabel ziehen';
-    po.addEventListener('pointerdown', function(e){ startWire(e, n); });
-    el.appendChild(po); n.outPort = po;
-  }
+  el.setAttribute('aria-label', label(n));
   var hd = document.createElement('header'); hd.className = 'handle';
-  var j = document.createElement('span'); j.className = 'jack';
-  var h3 = document.createElement('h3'); h3.textContent = label(n);
-  hd.appendChild(j); hd.appendChild(h3);
-  if (n.tool){ var v = document.createElement('span'); v.className = 'ver'; v.textContent = 'v' + n.tool.version; hd.appendChild(v); }
-  if (n.kind === 'tool'){
-    var del = document.createElement('button'); del.className = 'delbtn'; del.type = 'button'; del.textContent = '×'; del.setAttribute('aria-label', label(n) + ' entfernen');
-    del.addEventListener('click', function(){ removeNode(n); });
-    hd.appendChild(del);
+  n.inPort = n.outPort = null; n.thumb = null; n.statusEl = null;
+
+  if (n.kind === 'text'){
+    el.className = 'node textnode';
+    var g = document.createElement('span'); g.className = 'grip';
+    var gl = document.createElement('span'); gl.textContent = 'Text verschieben';
+    hd.appendChild(g); hd.appendChild(gl);
+    el.appendChild(hd);
+    var eb = document.createElement('div'); eb.className = 'tn-eyebrow'; eb.textContent = 'Patchbay · Protokoll v0.1';
+    var h1 = document.createElement('h1'); h1.className = 'tn-title'; h1.textContent = n.title;
+    var p = document.createElement('p'); p.className = 'tn-body'; p.textContent = n.body;
+    editable(h1, 'Überschrift', function(t){ n.title = t; });
+    editable(p, 'Beschreibung', function(t){ n.body = t; });
+    el.appendChild(eb); el.appendChild(h1); el.appendChild(p);
+  } else if (n.kind === 'note'){
+    el.className = 'node note';
+    var nl = document.createElement('span'); nl.textContent = 'Notiz';
+    hd.appendChild(nl); hd.appendChild(delButton(n));
+    el.appendChild(hd);
+    var body = document.createElement('div'); body.className = 'note-body'; body.textContent = n.text || '';
+    editable(body, 'Notiz schreiben …', function(t){ n.text = t; });
+    el.appendChild(body); n.noteBody = body;
+  } else {
+    el.className = 'node' + (n.bypass ? ' bypass' : '');
+    el.style.setProperty('--c', 'var(' + cableOf(n) + ')');
+    if (hasIn(n)){
+      var pi = document.createElement('span'); pi.className = 'port in'; pi.dataset.key = n.key; pi.title = 'Eingang';
+      pi.addEventListener('pointerdown', function(e){ startFromIn(e, n); });
+      el.appendChild(pi); n.inPort = pi;
+    }
+    if (n.kind === 'tool'){
+      var po = document.createElement('span'); po.className = 'port out'; po.title = 'Ausgang: Kabel ziehen';
+      po.addEventListener('pointerdown', function(e){ startWire(e, n); });
+      el.appendChild(po); n.outPort = po;
+    }
+    var j = document.createElement('span'); j.className = 'jack';
+    var h3 = document.createElement('h3'); h3.textContent = label(n);
+    hd.appendChild(j); hd.appendChild(h3);
+    if (n.tool){ var v = document.createElement('span'); v.className = 'ver'; v.textContent = 'v' + n.tool.version; hd.appendChild(v); }
+    if (n.kind === 'tool') hd.appendChild(delButton(n));
+    el.appendChild(hd);
+    var job = document.createElement('div'); job.className = 'job'; job.textContent = n.tool ? n.tool.job : 'Ende der Kette, wird zum Paket';
+    el.appendChild(job);
+    var cv = document.createElement('canvas'); cv.className = 'thumb'; cv.width = 360; cv.height = 360; cv.setAttribute('aria-label', 'Ergebnis von ' + label(n));
+    n.thumb = cv; if (n.out) drawBuf(cv, n.out);
+    el.appendChild(cv);
+    if (n.tool){
+      var ps = document.createElement('div'); ps.className = 'params';
+      n.tool.params.forEach(function(q){ ps.appendChild(buildField(n, q)); });
+      el.appendChild(ps);
+    }
+    var ft = document.createElement('div'); ft.className = 'cardfoot';
+    var st = document.createElement('span'); st.className = 'status'; n.statusEl = st; setStatus(n, n.status);
+    ft.appendChild(st);
+    if (n.kind === 'tool' && n.tool.op !== 'generate'){
+      var sw = document.createElement('label'); sw.className = 'switch';
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'by-' + n.key; cb.checked = !n.bypass;
+      cb.addEventListener('change', function(){ n.bypass = !cb.checked; el.classList.toggle('bypass', n.bypass); schedule(); });
+      sw.appendChild(cb); sw.appendChild(document.createTextNode('aktiv'));
+      ft.appendChild(sw);
+    } else if (n.kind === 'tool'){
+      var q2 = document.createElement('span'); q2.textContent = 'Quelle'; ft.appendChild(q2);
+    }
+    el.appendChild(ft);
   }
-  hd.addEventListener('pointerdown', function(e){ if (e.target.closest('button, input, select, label')) return; startDrag(e, n, el, hd); });
-  el.appendChild(hd);
-  var job = document.createElement('div'); job.className = 'job'; job.textContent = n.tool ? n.tool.job : 'Ende der Pipeline, wird zum Paket';
-  el.appendChild(job);
-  var cv = document.createElement('canvas'); cv.className = 'thumb'; cv.width = 360; cv.height = 360; cv.setAttribute('aria-label', 'Ergebnis von ' + label(n));
-  n.thumb = cv; if (n.out) drawBuf(cv, n.out);
-  el.appendChild(cv);
-  if (n.tool){
-    var ps = document.createElement('div'); ps.className = 'params';
-    n.tool.params.forEach(function(p){ ps.appendChild(buildField(n, p)); });
-    el.appendChild(ps);
-  }
-  var ft = document.createElement('div'); ft.className = 'cardfoot';
-  var st = document.createElement('span'); st.className = 'status'; n.statusEl = st; setStatus(n, n.status);
-  ft.appendChild(st);
-  if (n.kind === 'tool' && n.tool.op !== 'generate'){
-    var sw = document.createElement('label'); sw.className = 'switch';
-    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'by-' + n.key; cb.checked = !n.bypass;
-    cb.addEventListener('change', function(){ n.bypass = !cb.checked; el.classList.toggle('bypass', n.bypass); schedule(); });
-    sw.appendChild(cb); sw.appendChild(document.createTextNode('aktiv'));
-    ft.appendChild(sw);
-  } else if (n.kind === 'tool'){
-    var q = document.createElement('span'); q.textContent = 'Quelle'; ft.appendChild(q);
-  }
-  el.appendChild(ft);
+  hd.addEventListener('pointerdown', function(e){ if (e.target.closest('button, input, select')) return; startDrag(e, n, el); });
   n.el = el;
-  inner.appendChild(el);
+  plane.appendChild(el);
 }
 function buildBoard(){
-  inner.querySelectorAll('.node').forEach(function(x){ x.remove(); });
-  nodes.forEach(buildNode); sizeBoard(); drawWires();
-}
-function sizeBoard(){
-  var mx = 0, my = 0;
-  nodes.forEach(function(n){ mx = Math.max(mx, n.x + n.w); my = Math.max(my, n.y + (n.el ? n.el.offsetHeight : 480)); });
-  var w = Math.max(mx + 160, board.clientWidth), h = Math.max(my + 120, board.clientHeight);
-  inner.style.width = w + 'px'; inner.style.height = h + 'px';
-  wires.setAttribute('width', w); wires.setAttribute('height', h);
+  plane.querySelectorAll('.node').forEach(function(x){ x.remove(); });
+  nodes.forEach(buildNode); drawInk(); sizeBoard(); drawWires();
 }
 
-/* Kabel */
+/* ---------- Größe, Zoom, Verschieben ---------- */
+function nodeH(n){ return n.el ? n.el.offsetHeight : 480; }
+function contentBox(){
+  var x0 = Infinity, y0 = Infinity, x1 = 0, y1 = 0;
+  nodes.forEach(function(n){ x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y); x1 = Math.max(x1, n.x + n.w); y1 = Math.max(y1, n.y + nodeH(n)); });
+  strokes.forEach(function(s){ s.p.forEach(function(q){ x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }); });
+  if (x0 === Infinity){ x0 = y0 = 0; }
+  return { x0: x0, y0: y0, x1: x1, y1: y1 };
+}
+function sizeBoard(){
+  var b = contentBox();
+  var w = Math.max(b.x1 + 600, board.clientWidth / scale), h = Math.max(b.y1 + 400, board.clientHeight / scale);
+  plane.style.width = w + 'px'; plane.style.height = h + 'px';
+  [wires, ink].forEach(function(s){ s.setAttribute('width', w); s.setAttribute('height', h); });
+  sizer.style.width = (w * scale) + 'px'; sizer.style.height = (h * scale) + 'px';
+}
+function setScale(s, cx, cy){
+  s = Math.min(1.6, Math.max(0.3, s));
+  if (cx === undefined){ cx = board.clientWidth / 2; cy = board.clientHeight / 2; }
+  var px = (board.scrollLeft + cx) / scale, py = (board.scrollTop + cy) / scale;
+  scale = s; plane.style.transform = 'scale(' + s + ')';
+  sizeBoard();
+  board.scrollLeft = px * s - cx; board.scrollTop = py * s - cy;
+  $('zoomVal').textContent = Math.round(s * 100) + '%';
+}
+function fit(){
+  var b = contentBox(), pad = 48, bottomPad = 96;
+  var s = Math.min((board.clientWidth - pad * 2) / Math.max(1, b.x1 - b.x0), (board.clientHeight - pad - bottomPad) / Math.max(1, b.y1 - b.y0), 1);
+  if (narrow.matches) s = Math.max(s, 0.6);
+  setScale(Math.max(0.3, s), 0, 0);
+  board.scrollLeft = b.x0 * scale - pad; board.scrollTop = b.y0 * scale - pad;
+}
+board.addEventListener('wheel', function(e){
+  if (!(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault();
+  var r = board.getBoundingClientRect();
+  setScale(scale * Math.exp(-e.deltaY * 0.01), e.clientX - r.left, e.clientY - r.top);
+}, { passive: false });
+board.addEventListener('pointerdown', function(e){
+  if (penMode || e.pointerType !== 'mouse' || e.button !== 0) return;
+  var t = e.target; if (!(t === board || t === sizer || t === plane || t === wires)) return;
+  e.preventDefault();
+  var sx = e.clientX, sy = e.clientY, sl = board.scrollLeft, st = board.scrollTop;
+  board.classList.add('panning');
+  onDrag(function(ev){ board.scrollLeft = sl - (ev.clientX - sx); board.scrollTop = st - (ev.clientY - sy); }, function(){ board.classList.remove('panning'); });
+});
+$('zoomIn').addEventListener('click', function(){ setScale(scale * 1.2); });
+$('zoomOut').addEventListener('click', function(){ setScale(scale / 1.2); });
+$('zoomVal').addEventListener('click', fit);
+
+/* ---------- Kabel ---------- */
 function portXY(n, side){ return side === 'out' ? { x: n.x + n.w, y: n.y + PORT_Y } : { x: n.x, y: n.y + PORT_Y }; }
 function curve(a, b){ var dx = Math.max(60, Math.abs(b.x - a.x) / 2); return 'M' + a.x + ' ' + a.y + ' C' + (a.x + dx) + ' ' + a.y + ' ' + (b.x - dx) + ' ' + b.y + ' ' + b.x + ' ' + b.y; }
-function svgPath(d, cls, color){ var p = document.createElementNS(SVGNS, 'path'); p.setAttribute('d', d); p.setAttribute('class', cls); if (color) p.style.stroke = color; return p; }
+function svgPath(d, cls, color, width){ var p = document.createElementNS(SVGNS, 'path'); p.setAttribute('d', d); p.setAttribute('class', cls); if (color) p.style.stroke = color; if (width) p.style.strokeWidth = width; return p; }
 function drawWires(){
   while (wires.firstChild) wires.removeChild(wires.firstChild);
   edges.forEach(function(e){
@@ -730,7 +878,7 @@ function drawWires(){
     var d = curve(portXY(a, 'out'), portXY(b, 'in'));
     var hit = svgPath(d, 'wire-hit');
     var t = document.createElementNS(SVGNS, 'title'); t.textContent = label(a) + ' → ' + label(b) + ' · antippen zum Trennen'; hit.appendChild(t);
-    hit.addEventListener('click', function(){ edges = edges.filter(function(x){ return x !== e; }); log(2, 'Host', 'Graph', 'disconnect', label(a) + ' ✕ ' + label(b)); drawWires(); schedule(); });
+    hit.addEventListener('click', function(){ edges = edges.filter(function(x){ return x !== e; }); log('Host', 'Graph', 'disconnect', label(a) + ' ✕ ' + label(b)); drawWires(); schedule(); });
     wires.appendChild(hit);
     wires.appendChild(svgPath(d, 'wire', 'var(' + cableOf(a) + ')'));
   });
@@ -740,20 +888,20 @@ function drawWires(){
     if (n.outPort) n.outPort.classList.toggle('on', edges.some(function(e){ return e.from === n.key; }));
   });
 }
-function boardPt(e){ var r = inner.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+function boardPt(e){ var r = plane.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; }
 function onDrag(move, end){
   function up(ev){ window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); end(ev); }
   window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
 }
-function startDrag(e, n, el, hd){
+function startDrag(e, n, el){
   e.preventDefault();
   var p0 = boardPt(e), ox = n.x, oy = n.y;
   el.style.zIndex = ++zTop; el.classList.add('dragging');
   onDrag(function(ev){
     var p = boardPt(ev);
     n.x = Math.max(0, Math.round(ox + p.x - p0.x)); n.y = Math.max(0, Math.round(oy + p.y - p0.y));
-    el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; drawWires();
-  }, function(){ el.classList.remove('dragging'); sizeBoard(); });
+    el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; if (isPipe(n)) drawWires();
+  }, function(){ el.classList.remove('dragging'); sizeBoard(); save(); });
 }
 function startWire(e, from){
   e.preventDefault(); e.stopPropagation();
@@ -770,7 +918,7 @@ function startWire(e, from){
 function startFromIn(e, n){
   var s = srcOf(n); if (!s){ e.preventDefault(); return; }
   edges = edges.filter(function(x){ return x.to !== n.key; });
-  log(2, 'Host', 'Graph', 'disconnect', label(s) + ' ✕ ' + label(n));
+  log('Host', 'Graph', 'disconnect', label(s) + ' ✕ ' + label(n));
   schedule(); startWire(e, s);
 }
 function upstreamHas(n, key){ for (var s = srcOf(n); s; s = srcOf(s)){ if (s.key === key) return true; } return false; }
@@ -780,25 +928,144 @@ function connect(a, b){
   if (b.tool && !b.tool.accepts.some(function(t){ return a.tool.produces.some(function(o){ return t === o || (t.slice(-2) === '/*' && o.indexOf(t.slice(0, -1)) === 0); }); })){ toast(label(b) + ' nimmt das nicht an'); return; }
   edges = edges.filter(function(x){ return x.to !== b.key; });
   edges.push({ from: a.key, to: b.key });
-  log(2, 'Host', 'Graph', 'connect', label(a) + ' → ' + label(b));
+  log('Host', 'Graph', 'connect', label(a) + ' → ' + label(b));
   drawWires(); schedule();
 }
 function removeNode(n){
   nodes = nodes.filter(function(x){ return x !== n; });
   edges = edges.filter(function(e){ return e.from !== n.key && e.to !== n.key; });
   if (n.el) n.el.remove();
-  log(2, 'Host', 'Graph', 'remove', label(n));
-  sizeBoard(); drawWires(); schedule();
+  if (isPipe(n)) log('Host', 'Graph', 'remove', label(n));
+  sizeBoard(); drawWires(); if (isPipe(n)) schedule(); else save();
+}
+function freeSpot(w){
+  /* unterhalb des Inhalts, horizontal in der Mitte der Ansicht */
+  var b = contentBox();
+  return { x: Math.max(24, (board.scrollLeft + board.clientWidth / 2) / scale - w / 2 + (seq % 4) * 24), y: b.y1 + 48 };
+}
+function reveal(n){
+  var h = nodeH(n) * scale, top = n.y * scale - 40, bottom = n.y * scale + h + 120;
+  if (top < board.scrollTop || bottom > board.scrollTop + board.clientHeight){ board.scrollTo({ top: Math.max(0, Math.min(top, bottom - board.clientHeight)), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+}
+function addNode(kind, tool){
+  var c = freeSpot(widthOf(kind));
+  var n = newNode(kind, tool, c.x, c.y);
+  if (kind === 'note') n.text = '';
+  buildNode(n); n.el.style.zIndex = ++zTop; sizeBoard(); drawWires(); reveal(n);
+  if (kind === 'tool'){ log('Host', 'Graph', 'add', tool.name); toast(tool.name + ' hinzugefügt. Kabel ziehen, um ihn zu verbinden.'); schedule(); }
+  else { save(); if (n.noteBody) n.noteBody.focus(); }
+  return n;
 }
 
-/* Status, Zeichnen */
+/* ---------- Stift ---------- */
+var penMode = false, penColor = '--ink', clearArmed = null;
+function setPen(on){
+  penMode = on; penLayer.hidden = !on; $('penOpts').hidden = !on;
+  $('penBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
+  board.classList.toggle('pen', on);
+  if (on) toast('Stift aktiv: direkt aufs Deck zeichnen. Esc beendet.');
+}
+function strokeD(p){
+  if (p.length < 3) return 'M' + p.map(function(q){ return q[0] + ' ' + q[1]; }).join(' L');
+  var d = 'M' + p[0][0] + ' ' + p[0][1];
+  for (var i = 1; i < p.length - 1; i++){ var mx = (p[i][0] + p[i+1][0]) / 2, my = (p[i][1] + p[i+1][1]) / 2; d += ' Q' + p[i][0] + ' ' + p[i][1] + ' ' + mx.toFixed(1) + ' ' + my.toFixed(1); }
+  var l = p[p.length - 1]; return d + ' L' + l[0] + ' ' + l[1];
+}
+function drawInk(){ while (ink.firstChild) ink.removeChild(ink.firstChild); strokes.forEach(function(s){ ink.appendChild(svgPath(strokeD(s.p), 'ink-stroke', 'var(' + s.c + ')', s.w)); }); }
+penLayer.addEventListener('pointerdown', function(e){
+  e.preventDefault();
+  var r1 = function(v){ return Math.round(v * 10) / 10; };
+  var p = boardPt(e), s = { c: penColor, w: 3, p: [[r1(p.x), r1(p.y)]] };
+  strokes.push(s);
+  var path = svgPath(strokeD(s.p), 'ink-stroke', 'var(' + s.c + ')', s.w); ink.appendChild(path);
+  onDrag(function(ev){
+    var q = boardPt(ev), last = s.p[s.p.length - 1];
+    if (Math.hypot(q.x - last[0], q.y - last[1]) < 2) return;
+    s.p.push([r1(q.x), r1(q.y)]); path.setAttribute('d', strokeD(s.p));
+  }, function(){
+    if (s.p.length === 1) s.p.push([s.p[0][0] + 0.5, s.p[0][1] + 0.5]);
+    path.setAttribute('d', strokeD(s.p)); sizeBoard(); save();
+  });
+});
+$('penBtn').addEventListener('click', function(){ setPen(!penMode); });
+document.querySelectorAll('.swatch').forEach(function(b){
+  b.addEventListener('click', function(){
+    penColor = b.dataset.color;
+    document.querySelectorAll('.swatch').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+  });
+});
+$('undoBtn').addEventListener('click', function(){ if (strokes.length){ strokes.pop(); drawInk(); save(); } });
+$('clearBtn').addEventListener('click', function(){
+  var b = $('clearBtn').firstElementChild;
+  if (!strokes.length) return;
+  if (!clearArmed){ b.textContent = 'Wirklich leeren?'; clearArmed = setTimeout(function(){ b.textContent = 'Leeren'; clearArmed = null; }, 2500); return; }
+  clearTimeout(clearArmed); clearArmed = null; b.textContent = 'Leeren';
+  strokes = []; drawInk(); save(); toast('Alle Striche gelöscht');
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  if (!$('toolMenu').hidden) closeMenu();
+  else if (penMode) setPen(false);
+});
+
+/* ---------- Menü „Neues Tool“ ---------- */
+var menu = $('toolMenu'), toolBtn = $('toolBtn');
+function closeMenu(){ menu.hidden = true; toolBtn.setAttribute('aria-expanded', 'false'); }
+function openMenu(){ menu.hidden = false; toolBtn.setAttribute('aria-expanded', 'true'); var f = menu.querySelector('button'); if (f) f.focus(); }
+toolBtn.addEventListener('click', function(){ if (menu.hidden) openMenu(); else closeMenu(); });
+document.addEventListener('pointerdown', function(e){ if (!menu.hidden && !$('menuWrap').contains(e.target)) closeMenu(); });
+function menuItem(title, sub, cable, fn){
+  var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
+  if (cable){ var j = document.createElement('span'); j.className = 'jack'; j.style.setProperty('--c', 'var(' + cable + ')'); b.appendChild(j); }
+  else b.className = 'plain';
+  var t = document.createElement('span'); t.textContent = title; b.appendChild(t);
+  if (sub){ var s = document.createElement('small'); s.textContent = sub; b.appendChild(s); }
+  b.addEventListener('click', function(){ closeMenu(); fn(); });
+  return b;
+}
+function heading(t){ var h = document.createElement('h4'); h.textContent = t; return h; }
+menu.appendChild(heading('Tools'));
+TOOLS.forEach(function(t){ menu.appendChild(menuItem(t.name, t.job + ' · v' + t.version, t.cableVar, function(){ addNode('tool', t); })); });
+menu.appendChild(document.createElement('hr'));
+menu.appendChild(heading('Presets'));
+var PRESETS = [
+  { name: 'Zeitung', sub: 'Stufen → Raster → Duoton', chain: ['app.demo.posterize', 'app.demo.dither', 'app.demo.duotone'], p: { 'app.demo.posterize': { levels: 3, contrast: 22 }, 'app.demo.dither': { algorithm: 'floyd', scale: 2 }, 'app.demo.duotone': { dark: '#16181c', light: '#efe9dc' } } },
+  { name: 'Siebdruck', sub: 'Stufen → Duoton', chain: ['app.demo.posterize', 'app.demo.duotone'], p: { 'app.demo.posterize': { levels: 4, contrast: 18 }, 'app.demo.duotone': { dark: '#1b2a6b', light: '#ff8a5c' } } },
+  { name: 'Handheld', sub: 'Raster → Duoton', chain: ['app.demo.dither', 'app.demo.duotone'], p: { 'app.demo.dither': { algorithm: 'bayer', scale: 3 }, 'app.demo.duotone': { dark: '#0f380f', light: '#9bbc0f' } } }
+];
+PRESETS.forEach(function(pr){ menu.appendChild(menuItem(pr.name, pr.sub, null, function(){
+  pr.chain.forEach(function(id){ Object.assign(firstOf(id).params, pr.p[id] || {}); });
+  setChain(pr.chain); toast('Preset ' + pr.name + ' geladen');
+})); });
+menu.appendChild(document.createElement('hr'));
+menu.appendChild(menuItem('Kette anordnen', 'Verbundene Nodes in eine Reihe legen', null, function(){ layout(currentChain()); buildBoard(); fit(); save(); }));
+menu.appendChild(menuItem('Deck zurücksetzen', 'Ausgangszustand, Notizen und Striche entfernen', null, function(){ try { localStorage.removeItem(STORE); } catch(e){} defaults(); buildBoard(); fit(); schedule(); toast('Deck zurückgesetzt'); }));
+
+$('noteBtn').addEventListener('click', function(){ addNode('note', null); });
+
+/* ---------- Panel ---------- */
+function setSide(open){
+  app.classList.toggle('no-side', !open);
+  $('panelBtn').setAttribute('aria-pressed', open ? 'true' : 'false');
+  requestAnimationFrame(sizeBoard);
+}
+$('panelBtn').addEventListener('click', function(){ setSide(app.classList.contains('no-side')); });
+$('sideClose').addEventListener('click', function(){ setSide(false); });
+document.querySelectorAll('.itabs').forEach(function(bar){
+  var btns = bar.querySelectorAll('button');
+  btns.forEach(function(b){ b.addEventListener('click', function(){ btns.forEach(function(x){ var on = x === b; x.setAttribute('aria-selected', on ? 'true' : 'false'); $(x.dataset.panel).hidden = !on; }); }); });
+});
+$('copy2').addEventListener('click', function(){
+  var pre = $('pkgJson2');
+  navigator.clipboard.writeText(pre.textContent).then(function(){ toast('Manifest kopiert'); }).catch(function(){ var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text markiert, jetzt kopieren'); });
+});
+
+/* ---------- Auswertung ---------- */
 function setStatus(n, s){ n.status = s; if (!n.statusEl) return; n.statusEl.textContent = s || ' '; n.statusEl.className = 'status' + (s === 'Cache' ? ' cache' : /ms$/.test(s) ? ' live' : ''); }
 function drawBuf(cv, o){ cv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(o.buf), o.w, o.h), 0, 0); }
 function clearCv(cv){ cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }
-
-/* Auswertung */
 var timer = null, token = 0;
-function schedule(){ clearTimeout(timer); timer = setTimeout(run, 90); }
+function schedule(){ clearTimeout(timer); timer = setTimeout(run, 90); save(); }
 async function run(){
   var my = ++token, memo = {}, t0 = performance.now(), hits = 0, renders = 0;
   async function ev(n){
@@ -827,25 +1094,25 @@ async function run(){
           var entry = headless[n.tool.id]; await entry.ready;
           var copy = input ? input.buf.slice(0) : null, r;
           try { r = await request(entry, { pb: 'render', v: '0.1', rid: uid(), input: copy ? { buf: copy, w: input.w, h: input.h } : null, params: clone(n.params) }, copy ? [copy] : []); }
-          catch(err){ setStatus(n, 'Fehler'); log(2, 'Host', label(n), 'error', err.message); return null; }
-          if (r.pb === 'error'){ setStatus(n, 'Fehler'); log(2, label(n), 'Host', 'error', r.message); return null; }
+          catch(err){ setStatus(n, 'Fehler'); log('Host', label(n), 'error', err.message); return null; }
+          if (r.pb === 'error'){ setStatus(n, 'Fehler'); log(label(n), 'Host', 'error', r.message); return null; }
           res = { buf: r.output.buf, w: r.output.w, h: r.output.h };
           res.hash = await hashBuf(res.buf);
           if (cache.size > 300) cache.delete(cache.keys().next().value);
           cache.set(key, res); renders++;
           var ms = Math.max(1, Math.round(r.ms)) + ' ms';
-          setStatus(n, ms); log(2, label(n), 'Host', 'result', ms + ' · ' + shortHash(res.hash));
+          setStatus(n, ms); log(label(n), 'Host', 'result', ms + ' · ' + shortHash(res.hash));
         }
       }
     }
     n.out = res; memo[n.key] = res; return res;
   }
-  for (var i = 0; i < nodes.length; i++){ await ev(nodes[i]); if (my !== token) return; }
-  nodes.forEach(function(n){ if (n.thumb){ if (n.out) drawBuf(n.thumb, n.out); else clearCv(n.thumb); } });
-  if (hits && !renders) log(2, 'Host', 'Cache', 'cache', 'Keine Neuberechnung nötig, ' + hits + ' Nodes aus dem Cache');
-  var outN = nodeBy('out'), chain = [];
-  for (var c = outN ? srcOf(outN) : null; c; c = srcOf(c)) chain.unshift(c);
-  var hist = chain.filter(function(n){ return !n.bypass && n.out; }).map(function(n, k){
+  var pipe = nodes.filter(isPipe);
+  for (var i = 0; i < pipe.length; i++){ await ev(pipe[i]); if (my !== token) return; }
+  pipe.forEach(function(n){ if (n.thumb){ if (n.out) drawBuf(n.thumb, n.out); else clearCv(n.thumb); } });
+  if (hits && !renders) log('Host', 'Cache', 'cache', 'Keine Neuberechnung nötig, ' + hits + ' Nodes aus dem Cache');
+  var outN = nodeBy('out');
+  var hist = currentChain().filter(function(n){ return !n.bypass && n.out; }).map(function(n, k){
     var node = { id: 'n' + (k + 1), op: n.tool.op, tool: { id: n.tool.id, version: n.tool.version }, params: {}, inputs: n.inHash ? [n.inHash] : [], outputs: [n.out.hash], repro: n.tool.repro };
     Object.keys(n.params).forEach(function(q){ if (q !== 'prompt' && q !== 'seed') node.params[q] = n.params[q]; });
     if (n.tool.op === 'generate'){ node.prompt = { text: n.params.prompt }; node.model = { name: 'demo-noise-1', note: 'simuliert, kein echtes KI-Modell' }; node.seed = n.params.seed; }
@@ -854,16 +1121,18 @@ async function run(){
   if (outN && outN.out){ drawBuf($('out'), outN.out); renderOut(outN.out, hist, performance.now() - t0, hits); }
   else {
     clearCv($('out')); $('histList').innerHTML = ''; $('pkgJson2').textContent = 'Die Ausgabe ist nicht verbunden.';
-    var meta = $('outMeta'); meta.innerHTML = '<dt>Status</dt><dd>Ausgabe nicht verbunden. Zieh ein Kabel zum Node „Ausgabe“.</dd>';
+    var meta = $('outMeta'); meta.innerHTML = '';
+    var dt = document.createElement('dt'); dt.textContent = 'Status'; var dd = document.createElement('dd'); dd.textContent = 'Nicht verbunden. Zieh ein Kabel zum Node „Ausgabe“.';
+    meta.appendChild(dt); meta.appendChild(dd);
   }
 }
-function renderOut(o, nodes, ms, hits){
+function renderOut(o, hist, ms, hits){
   var meta = $('outMeta'); meta.innerHTML = '';
-  [['Größe', o.w + ' × ' + o.h + ' px, 8 Bit RGBA'], ['Hash', shortHash(o.hash)], ['Kette', nodes.map(function(n){ return byId[n.tool.id].name; }).join(' → ')], ['Lauf', Math.round(ms) + ' ms, ' + hits + ' aus Cache']].forEach(function(r){
+  [['Größe', o.w + ' × ' + o.h + ' px, 8 Bit RGBA'], ['Hash', shortHash(o.hash)], ['Kette', hist.map(function(n){ return byId[n.tool.id].name; }).join(' → ')], ['Lauf', Math.round(ms) + ' ms, ' + hits + ' aus Cache']].forEach(function(r){
     var dt = document.createElement('dt'); dt.textContent = r[0]; var dd = document.createElement('dd'); dd.textContent = r[1]; meta.appendChild(dt); meta.appendChild(dd);
   });
   var ol = $('histList'); ol.innerHTML = '';
-  nodes.forEach(function(n){
+  hist.forEach(function(n){
     var t = byId[n.tool.id], li = document.createElement('li');
     var dot = document.createElement('span'); dot.className = 'dot'; dot.style.setProperty('--c', 'var(' + t.cableVar + ')');
     var box = document.createElement('div');
@@ -874,67 +1143,54 @@ function renderOut(o, nodes, ms, hits){
     if (n.prompt) bits.push('Prompt: „' + n.prompt.text + '“ · Seed ' + n.seed);
     var ps = Object.keys(n.params).map(function(k){ return k + '=' + n.params[k]; }).join(', '); if (ps) bits.push(ps);
     bits.push((n.inputs[0] ? shortHash(n.inputs[0]) : 'keine Eingabe') + ' → ' + shortHash(n.outputs[0]));
-    h2.innerHTML = ''; bits.forEach(function(b, i){ if (i) h2.appendChild(document.createElement('br')); h2.appendChild(document.createTextNode(b)); });
+    bits.forEach(function(b, i){ if (i) h2.appendChild(document.createElement('br')); h2.appendChild(document.createTextNode(b)); });
     box.appendChild(h1); box.appendChild(h2); li.appendChild(dot); li.appendChild(box); ol.appendChild(li);
   });
-  var manifest = { patchbay: '0.1', primary: 'a1', assets: [{ id: 'a1', role: 'main', type: 'image/png', width: o.w, height: o.h, bitDepth: 8, colorSpace: 'srgb', alpha: true, hash: o.hash, path: 'assets/a1.png' }], history: { head: nodes.length ? nodes[nodes.length - 1].id : null, nodes: nodes } };
+  var manifest = { patchbay: '0.1', primary: 'a1', assets: [{ id: 'a1', role: 'main', type: 'image/png', width: o.w, height: o.h, bitDepth: 8, colorSpace: 'srgb', alpha: true, hash: o.hash, path: 'assets/a1.png' }], history: { head: hist.length ? hist[hist.length - 1].id : null, nodes: hist } };
   $('pkgJson2').textContent = JSON.stringify(manifest, null, 2);
 }
 
-/* ---------- Presets, Anordnen & Rundreise ---------- */
-var PRESETS = {
-  zeitung:   { chain: ['app.demo.posterize', 'app.demo.dither', 'app.demo.duotone'], p: { 'app.demo.posterize': { levels: 3, contrast: 22 }, 'app.demo.dither': { algorithm: 'floyd', scale: 2 }, 'app.demo.duotone': { dark: '#16181c', light: '#efe9dc' } } },
-  siebdruck: { chain: ['app.demo.posterize', 'app.demo.duotone'], p: { 'app.demo.posterize': { levels: 4, contrast: 18 }, 'app.demo.duotone': { dark: '#1b2a6b', light: '#ff8a5c' } } },
-  handheld:  { chain: ['app.demo.dither', 'app.demo.duotone'], p: { 'app.demo.dither': { algorithm: 'bayer', scale: 3 }, 'app.demo.duotone': { dark: '#0f380f', light: '#9bbc0f' } } }
-};
-function firstOf(toolId){ return nodes.find(function(n){ return n.tool && n.tool.id === toolId; }) || newNode(byId[toolId], 0, 0); }
+/* ---------- Anordnen, Presets, Ausgangszustand ---------- */
+var ROW_Y = 340;
+function firstOf(toolId){ return nodes.find(function(n){ return n.tool && n.tool.id === toolId; }) || newNode('tool', byId[toolId], 0, 0); }
 function currentChain(){ var outN = nodeBy('out'), ch = []; for (var c = outN ? srcOf(outN) : null; c; c = srcOf(c)) ch.unshift(c); return ch; }
 function layout(chain){
-  var x = 20, inChain = {};
-  chain.forEach(function(n, i){ n.x = x; n.y = i % 2 ? 70 : 24; x += n.w + 22; inChain[n.key] = 1; });
-  var outN = nodeBy('out'); if (outN){ outN.x = x; outN.y = 24; inChain.out = 1; }
-  var rx = 20, ry = 640;
-  nodes.forEach(function(n){ if (!inChain[n.key]){ n.x = rx; n.y = ry; rx += n.w + 22; } });
+  var x = 48, inChain = {};
+  chain.forEach(function(n, i){ n.x = x; n.y = ROW_Y + (i % 2 ? 46 : 0); x += n.w + 22; inChain[n.key] = 1; });
+  var outN = nodeBy('out'); if (outN){ outN.x = x; outN.y = ROW_Y; inChain.out = 1; }
+  var rx = 48, ry = ROW_Y + 620;
+  nodes.forEach(function(n){ if (isPipe(n) && !inChain[n.key]){ n.x = rx; n.y = ry; rx += n.w + 22; } });
 }
 function setChain(ids){
-  var gen = firstOf('app.demo.imagine'), outN = nodeBy('out') || newNode(null, 0, 0);
+  var gen = firstOf('app.demo.imagine'), outN = nodeBy('out') || newNode('output', null, 0, 0);
   var chain = [gen].concat(ids.map(firstOf));
   edges = [];
   for (var i = 1; i < chain.length; i++) edges.push({ from: chain[i - 1].key, to: chain[i].key });
   edges.push({ from: chain[chain.length - 1].key, to: outN.key });
   chain.forEach(function(n){ n.bypass = false; });
-  layout(chain);
-  buildBoard(); board.scrollTo({ left: 0, top: 0 }); schedule();
+  layout(chain); buildBoard(); fit(); schedule();
 }
-document.querySelectorAll('[data-preset]').forEach(function(b){
-  b.addEventListener('click', function(){
-    var pr = PRESETS[b.dataset.preset];
-    pr.chain.forEach(function(id){ Object.assign(firstOf(id).params, pr.p[id] || {}); });
-    setChain(pr.chain); toast('Preset ' + b.textContent + ' geladen');
-  });
-});
-$('layoutBtn').addEventListener('click', function(){ layout(currentChain()); buildBoard(); board.scrollTo({ left: 0, top: 0 }); });
-var addSel = $('addSel');
-TOOLS.forEach(function(t){ var o = document.createElement('option'); o.value = t.id; o.textContent = t.name; addSel.appendChild(o); });
-addSel.value = 'app.demo.duotone';
-$('addBtn').addEventListener('click', function(){
-  var n = newNode(byId[addSel.value], Math.max(0, Math.round(board.scrollLeft + board.clientWidth / 2 - NW / 2 + (seq % 4) * 24)), board.scrollTop + 40 + (seq % 4) * 24);
-  buildNode(n); n.el.style.zIndex = ++zTop; sizeBoard(); drawWires(); schedule();
-  log(2, 'Host', 'Graph', 'add', n.tool.name + ' (' + n.key + ')');
-  toast(n.tool.name + ' hinzugefügt. Kabel ziehen, um ihn zu verbinden.');
-});
-
-(function init(){
-  var g = newNode(byId['app.demo.imagine'], 0, 0), a = newNode(byId['app.demo.posterize'], 0, 0), b = newNode(byId['app.demo.dither'], 0, 0), d = newNode(byId['app.demo.duotone'], 0, 0);
-  newNode(null, 0, 0);
+function defaults(){
+  nodes = []; edges = []; strokes = []; seq = 0;
+  var t = newNode('text', null, 40, 32); t.title = DEFAULT_TITLE; t.body = DEFAULT_BODY;
+  var g = newNode('tool', byId['app.demo.imagine'], 0, 0), a = newNode('tool', byId['app.demo.posterize'], 0, 0), b = newNode('tool', byId['app.demo.dither'], 0, 0), d = newNode('tool', byId['app.demo.duotone'], 0, 0);
+  newNode('output', null, 0, 0);
   edges = [{ from: g.key, to: a.key }, { from: a.key, to: b.key }, { from: b.key, to: d.key }, { from: d.key, to: 'out' }];
   layout([g, a, b, d]);
-  buildBoard();
-})();
+  var n = newNode('note', null, 720, 40); n.text = 'Kabel vom rechten zum linken Anschluss ziehen. Ein Kabel antippen trennt es. Mit dem Stift kannst du direkt aufs Deck schreiben.';
+}
+
+/* ---------- Start ---------- */
+if (!load()) defaults();
+setSide(!narrow.matches);
+buildBoard();
+requestAnimationFrame(function(){ fit(); });
 window.addEventListener('resize', function(){ sizeBoard(); });
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ setTimeout(sendThemeAll, 30); }); } catch(e){}
+new MutationObserver(function(){ setTimeout(sendThemeAll, 30); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+function sendThemeAll(){ var t = themeVars(); frames.forEach(function(f){ if (f.port) f.port.postMessage({ pb: 'theme', theme: t }); }); }
 Promise.all(TOOLS.map(function(t){ return headless[t.id].ready; })).then(run);
 })();
 </script>
-
 </body>
 </html>
