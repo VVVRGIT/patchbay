@@ -1,0 +1,172 @@
+{
+  "patchbay": "0.1",
+  "updated": "2026-10-07",
+  "tools": [
+    {
+      "id": "app.demo.imagine",
+      "name": "Imagine",
+      "version": "0.3.0",
+      "description": "Bild aus Prompt (simuliertes Modell)",
+      "entry": "/#imagine",
+      "accepts": [],
+      "produces": [
+        "image/png"
+      ],
+      "modes": [
+        "interactive",
+        "headless"
+      ],
+      "deterministic": true,
+      "op": "generate",
+      "repro": "seeded",
+      "params": [
+        {
+          "id": "prompt",
+          "type": "prompt",
+          "label": "Prompt",
+          "default": "Kreise über Streifen, Abenddämmerung"
+        },
+        {
+          "id": "seed",
+          "type": "seed",
+          "label": "Seed",
+          "default": 421337
+        },
+        {
+          "id": "density",
+          "type": "int",
+          "label": "Dichte",
+          "min": 3,
+          "max": 16,
+          "step": 1,
+          "default": 8
+        }
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "app.demo.posterize",
+      "name": "Stufen",
+      "version": "1.2.0",
+      "description": "Farben auf wenige Stufen reduzieren",
+      "entry": "/#stufen",
+      "accepts": [
+        "image/*"
+      ],
+      "produces": [
+        "image/png"
+      ],
+      "modes": [
+        "interactive",
+        "headless"
+      ],
+      "deterministic": true,
+      "op": "transform",
+      "repro": "exact",
+      "params": [
+        {
+          "id": "levels",
+          "type": "int",
+          "label": "Stufen",
+          "min": 2,
+          "max": 10,
+          "step": 1,
+          "default": 4
+        },
+        {
+          "id": "contrast",
+          "type": "number",
+          "label": "Kontrast",
+          "min": -50,
+          "max": 50,
+          "step": 1,
+          "default": 10
+        }
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "app.demo.dither",
+      "name": "Raster",
+      "version": "2.1.0",
+      "description": "Dithering in Schwarz-Weiß",
+      "entry": "/#raster",
+      "accepts": [
+        "image/*"
+      ],
+      "produces": [
+        "image/png"
+      ],
+      "modes": [
+        "interactive",
+        "headless"
+      ],
+      "deterministic": true,
+      "op": "transform",
+      "repro": "exact",
+      "params": [
+        {
+          "id": "algorithm",
+          "type": "enum",
+          "label": "Verfahren",
+          "options": [
+            "atkinson",
+            "floyd",
+            "bayer"
+          ],
+          "labels": {
+            "atkinson": "Atkinson",
+            "floyd": "Floyd-Steinberg",
+            "bayer": "Bayer 4×4"
+          },
+          "default": "atkinson"
+        },
+        {
+          "id": "scale",
+          "type": "int",
+          "label": "Pixelgröße",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 2
+        }
+      ],
+      "license": "MIT"
+    },
+    {
+      "id": "app.demo.duotone",
+      "name": "Duoton",
+      "version": "1.0.4",
+      "description": "Helligkeit auf zwei Farben abbilden",
+      "entry": "/#duoton",
+      "accepts": [
+        "image/*"
+      ],
+      "produces": [
+        "image/png"
+      ],
+      "modes": [
+        "interactive",
+        "headless"
+      ],
+      "deterministic": true,
+      "op": "transform",
+      "repro": "exact",
+      "params": [
+        {
+          "id": "dark",
+          "type": "color",
+          "label": "Dunkel",
+          "default": "#1b2a6b"
+        },
+        {
+          "id": "light",
+          "type": "color",
+          "label": "Hell",
+          "default": "#f6f0e4"
+        }
+      ],
+      "license": "MIT"
+    }
+  ]
+}
