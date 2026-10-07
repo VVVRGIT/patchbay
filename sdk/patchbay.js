@@ -54,13 +54,13 @@
     function emit(state) { stateFns.forEach(function (fn) { try { fn(state); } catch (e) { console.error(e); } }); }
     function reportSize() {
       if (!port) return;
-      port.postMessage({ pb: 'size', v: V, h: Math.ceil(document.documentElement.scrollHeight) });
+      port.postMessage({ pb: 'size', v: V, h: Math.ceil((function(){var b=document.body,m=0,c=b.children;for(var i=0;i<c.length;i++){var e=c[i],s=getComputedStyle(e);if(s.position==='fixed'||s.display==='none')continue;var r=e.getBoundingClientRect();m=Math.max(m,r.bottom+window.scrollY+(parseFloat(s.marginBottom)||0));}return m+(parseFloat(getComputedStyle(b).paddingBottom)||0)+(parseFloat(getComputedStyle(b).marginBottom)||0);})()) });
     }
     function startUI() {
       if (uiStarted || typeof def.ui !== 'function') return;
       uiStarted = true;
       def.ui(api);
-      if (typeof ResizeObserver !== 'undefined') new ResizeObserver(reportSize).observe(document.documentElement);
+      if (typeof ResizeObserver !== 'undefined') (function(){var ro=new ResizeObserver(reportSize);ro.observe(document.documentElement);ro.observe(document.body);})();
       reportSize();
     }
     async function onMsg(d) {

@@ -74,6 +74,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--red); outli
 .colophon code { flex: 1; min-width: 0; overflow-wrap: anywhere; background: var(--paper-2); padding: 6px 8px; color: var(--ink); }
 .colophon button { font: 700 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; background: var(--ink); color: var(--paper); border: 0; padding: 9px 10px; cursor: pointer; }
 .colophon a { color: var(--ink); }
+/* Breit: Vorschau links, Regler rechts */
+@media (min-width: 760px) {
+  .sheet { max-width: 1300px; grid-template-columns: minmax(0, 1fr) minmax(300px, 420px); grid-template-areas: "mast mast" "plate controls" "colophon colophon"; align-items: start; column-gap: 22px; }
+  .mast { grid-area: mast; } .controls { grid-area: controls; } .colophon { grid-area: colophon; }
+  .plate { grid-area: plate; position: sticky; top: 14px; width: min(100%, calc(100vh - 140px)); justify-self: center; }
+}
 </style>
 </head>
 <body>

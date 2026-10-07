@@ -67,6 +67,12 @@ button:focus-visible, input:focus-visible, .xy:focus-visible { outline: 2px soli
 .colophon .url { display: flex; gap: 8px; }
 .colophon code { flex: 1; min-width: 0; overflow-wrap: anywhere; background: var(--well); border-radius: 6px; padding: 7px 8px; color: var(--ink); }
 .colophon a { color: var(--ink); }
+/* Breit (z. B. Vollbild oder breit gezogener Node): Vorschau links, Regler rechts */
+@media (min-width: 760px) {
+  .sheet { max-width: 1400px; grid-template-columns: minmax(0, 1fr) minmax(320px, 440px); grid-template-areas: "mast mast" "plate controls" "colophon colophon"; align-items: start; column-gap: 20px; }
+  .mast { grid-area: mast; } #controls { grid-area: controls; } .colophon { grid-area: colophon; }
+  .plate { grid-area: plate; position: sticky; top: 14px; width: min(100%, calc(100vh - 120px)); justify-self: center; }
+}
 </style>
 </head>
 <body>
