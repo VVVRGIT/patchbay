@@ -196,6 +196,28 @@
         "standalone"
       ],
       "license": "MIT"
+    },
+    {
+      "id": "tools.patchbay.dsprsn",
+      "name": "DSPRSN",
+      "version": "1.0.0",
+      "description": "Spektrale Dispersion wie im Prisma",
+      "source": "url",
+      "manifest": "/tools/dsprsn/patchbay.json",
+      "entry": "/tools/dsprsn/",
+      "accepts": [
+        "image/*"
+      ],
+      "produces": [
+        "image/png"
+      ],
+      "modes": [
+        "headless",
+        "embedded",
+        "standalone"
+      ],
+      "license": "MIT",
+      "credits": "Effekt ursprünglich erstellt mit Brik (brik.space), für Patchbay portiert"
     }
   ]
 }

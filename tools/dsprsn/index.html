@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSPRSN</title>
+<meta name="description" content="DSPRSN: spektrale Dispersion als Patchbay-Tool. Verzerrung plus versetzte Farbkanäle wie im Prisma.">
+<link rel="icon" type="image/svg+xml" href="/assets/patchbay-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Eigener Look: Dunkelkammer mit Spektralkante. Bewusst nur dunkel. */
+:root {
+  --bg: #0A0A0C;
+  --panel: #131317;
+  --well: #1B1B21;
+  --ink: #ECECF1;
+  --muted: #8B8B97;
+  --line: #2A2A33;
+  --spectrum: linear-gradient(90deg, #FF4D4D, #FFC44D, #5CFF95, #4DC3FF, #A34DFF);
+  --display: "Unbounded", "Arial Black", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 400 13px/1.45 var(--mono); }
+body { padding: 14px; }
+body.standalone { padding: 32px 20px 48px; }
+.sheet { max-width: 520px; margin: 0 auto; display: grid; gap: 14px; }
+.mast { display: grid; gap: 6px; }
+.mast h1 { margin: 0; font: 700 34px/0.95 var(--display); letter-spacing: .04em; }
+body.embedded .mast h1 { font-size: 22px; }
+.spec { height: 3px; background: var(--spectrum); border-radius: 2px; }
+.sub { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.intro { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+.plate { position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 1; }
+.plate canvas { display: block; width: 100%; height: 100%; }
+.plate .wait { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 12px; }
+.group > h2 { margin: 0; font: 400 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.group > h2::before { content: ""; width: 14px; height: 2px; background: var(--spectrum); }
+.ctl { display: grid; gap: 6px; }
+.ctl .lab { display: flex; justify-content: space-between; color: var(--muted); }
+.ctl .lab output { color: var(--ink); font-variant-numeric: tabular-nums; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; margin: 0; cursor: pointer; }
+input[type="range"]::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: var(--line); }
+input[type="range"]::-moz-range-track { height: 3px; border-radius: 2px; background: var(--line); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5.5px; border-radius: 50%; background: var(--ink); border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--ink); }
+input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chips button, .seg button { font: 400 11px/1 var(--mono); color: var(--muted); background: var(--well); border: 1px solid var(--line); border-radius: 999px; padding: 6px 9px; cursor: pointer; }
+.chips button:hover, .seg button:hover { color: var(--ink); }
+.chips button[aria-pressed="true"], .seg button[aria-pressed="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.seg { display: inline-flex; gap: 4px; }
+.padrow { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: center; }
+.xy { position: relative; width: 112px; height: 112px; border-radius: 10px; background: var(--well); border: 1px solid var(--line); cursor: crosshair; touch-action: none; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 50% 50%; background-position: center; }
+.xy .dot { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--ink); pointer-events: none; }
+.seedrow { display: flex; gap: 6px; }
+.seedrow input { flex: 1; min-width: 0; font: 400 13px/1 var(--mono); color: var(--ink); background: var(--well); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.btn { font: 400 12px/1 var(--mono); color: var(--ink); background: var(--well); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+button:focus-visible, input:focus-visible, .xy:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.colophon { display: grid; gap: 8px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.colophon .url { display: flex; gap: 8px; }
+.colophon code { flex: 1; min-width: 0; overflow-wrap: anywhere; background: var(--well); border-radius: 6px; padding: 7px 8px; color: var(--ink); }
+.colophon a { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="mast">
+    <h1>DSPRSN</h1>
+    <div class="spec" aria-hidden="true"></div>
+    <div class="sub"><span>Spektrale Dispersion</span><span id="ver">v1.0.0</span></div>
+    <p class="intro" id="intro" hidden>Verzerrt ein Bild und tastet die Farbkanäle versetzt ab, wie Licht im Prisma. Dieses Tool spricht Patchbay: Im Deck wird es zum Node, gleiche Einstellungen ergeben immer dasselbe Bild.</p>
+  </header>
+  <div class="plate">
+    <canvas id="cv" width="360" height="360" aria-label="Vorschau"></canvas>
+    <div class="wait" id="wait">Wartet auf ein Bild aus dem vorigen Node.</div>
+  </div>
+  <div id="controls" style="display:grid;gap:10px"></div>
+  <footer class="colophon" id="colophon" hidden>
+    <span>Im Patchbay-Deck einbinden: „Neues Tool“ → „Tool per URL einbinden“ und diese Adresse eintragen.</span>
+    <div class="url"><code id="murl"></code><button class="btn" type="button" id="copy">Kopieren</button></div>
+    <span>Effekt ursprünglich erstellt mit Brik, für Patchbay portiert · <a href="/">Zum Patchbay-Deck</a></span>
+  </footer>
+</div>
+
+<script src="/sdk/patchbay.js"></script>
+<script src="engine.js"></script>
+<script>
+(function(){
+'use strict';
+var BASE = '/tools/dsprsn/';
+
+function render(img, p){
+  if (!img) return new ImageData(360, 360);
+  var out = DSPRSN.render(img.data, img.width, img.height, p);
+  return new ImageData(out, img.width, img.height);
+}
+
+function sample(){
+  var W = 360, H = 360, c = document.createElement('canvas'); c.width = W; c.height = H; var g = c.getContext('2d');
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  var r = g.createRadialGradient(W * .5, H * .55, 10, W * .5, H * .55, 190); r.addColorStop(0, '#3a3a3a'); r.addColorStop(1, '#000');
+  g.fillStyle = r; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 64px Unbounded, "Arial Black", sans-serif';
+  g.fillText('DSPRSN', W / 2, H / 2);
+  return g.getImageData(0, 0, W, H);
+}
+
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function obj(k, v){ var o = {}; o[k] = v; return o; }
+
+function ui(pb){
+  var M = pb.manifest, P = pb.params, byId = {};
+  M.params.forEach(function(p){ byId[p.id] = p; });
+  document.body.classList.add(pb.mode);
+  document.getElementById('ver').textContent = 'v' + M.version;
+  if (pb.mode === 'standalone'){
+    document.getElementById('intro').hidden = false; document.getElementById('colophon').hidden = false;
+    var url = new URL(BASE + 'patchbay.json', location.href).href; document.getElementById('murl').textContent = url;
+    document.getElementById('copy').addEventListener('click', function(){ var b = this; navigator.clipboard.writeText(url).then(function(){ b.textContent = 'Kopiert'; setTimeout(function(){ b.textContent = 'Kopieren'; }, 1500); }).catch(function(){}); });
+  }
+  function range(id){
+    var p = byId[id], box = el('div', 'ctl'), lab = el('label', 'lab'), out = el('output', null, P[id]), inp = document.createElement('input');
+    inp.type = 'range'; inp.id = 'c-' + id; inp.min = p.min; inp.max = p.max; inp.step = p.step || 1; inp.value = P[id]; lab.setAttribute('for', inp.id);
+    lab.appendChild(el('span', null, p.label)); lab.appendChild(out);
+    inp.addEventListener('input', function(){ out.textContent = inp.value; pb.setParams(obj(id, Number(inp.value))); });
+    box.appendChild(lab); box.appendChild(inp); return box;
+  }
+  function chips(id, cls){
+    var p = byId[id], box = el('div', 'ctl'), lab = el('div', 'lab'); lab.appendChild(el('span', null, p.label));
+    var g = el('div', cls || 'chips'); g.setAttribute('role', 'group'); g.setAttribute('aria-label', p.label);
+    p.options.forEach(function(o){
+      var b = el('button', null, o); b.type = 'button'; b.setAttribute('aria-pressed', P[id] === o ? 'true' : 'false');
+      b.addEventListener('click', function(){ g.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); pb.setParams(obj(id, o)); });
+      g.appendChild(b);
+    });
+    box.appendChild(lab); box.appendChild(g); return box;
+  }
+  function xy(){
+    var pad = el('div', 'xy'), dot = el('span', 'dot'); pad.tabIndex = 0; pad.setAttribute('role', 'slider'); pad.setAttribute('aria-label', 'Richtung');
+    pad.appendChild(dot);
+    var outX = el('output', null, P.dir_x), outY = el('output', null, P.dir_y);
+    function place(){ dot.style.left = ((P.dir_x + 1) / 2 * 100) + '%'; dot.style.top = ((P.dir_y + 1) / 2 * 100) + '%'; outX.textContent = P.dir_x.toFixed(2); outY.textContent = P.dir_y.toFixed(2); pad.setAttribute('aria-valuetext', 'X ' + P.dir_x.toFixed(2) + ', Y ' + P.dir_y.toFixed(2)); }
+    function setFrom(e){ var r = pad.getBoundingClientRect(); var x = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1)), y = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1)); pb.setParams({ dir_x: Math.round(x * 100) / 100, dir_y: Math.round(y * 100) / 100 }); place(); }
+    pad.addEventListener('pointerdown', function(e){ pad.setPointerCapture(e.pointerId); setFrom(e); pad.onpointermove = setFrom; });
+    pad.addEventListener('pointerup', function(){ pad.onpointermove = null; });
+    pad.addEventListener('keydown', function(e){ var d = { ArrowLeft: [-.05, 0], ArrowRight: [.05, 0], ArrowUp: [0, -.05], ArrowDown: [0, .05] }[e.key]; if (!d) return; e.preventDefault();
+      pb.setParams({ dir_x: Math.max(-1, Math.min(1, Math.round((P.dir_x + d[0]) * 100) / 100)), dir_y: Math.max(-1, Math.min(1, Math.round((P.dir_y + d[1]) * 100) / 100)) }); place(); });
+    place();
+    var row = el('div', 'padrow'), info = el('div', 'ctl');
+    var lx = el('div', 'lab'); lx.appendChild(el('span', null, 'Richtung X')); lx.appendChild(outX);
+    var ly = el('div', 'lab'); ly.appendChild(el('span', null, 'Richtung Y')); ly.appendChild(outY);
+    info.appendChild(lx); info.appendChild(ly); info.appendChild(el('span', null, 'Ziehen oder Pfeiltasten')).style.color = 'var(--muted)';
+    row.appendChild(pad); row.appendChild(info); return row;
+  }
+  function seed(){
+    var p = byId.seed, box = el('div', 'ctl'), lab = el('label', 'lab'); lab.setAttribute('for', 'c-seed'); lab.appendChild(el('span', null, p.label));
+    var row = el('div', 'seedrow'), inp = document.createElement('input'); inp.type = 'number'; inp.id = 'c-seed'; inp.value = P.seed;
+    var b = el('button', 'btn', 'Zufall'); b.type = 'button';
+    inp.addEventListener('input', function(){ pb.setParams({ seed: Number(inp.value) || 0 }); });
+    b.addEventListener('click', function(){ inp.value = Math.floor(Math.random() * 99999); pb.setParams({ seed: Number(inp.value) }); });
+    row.appendChild(inp); row.appendChild(b); box.appendChild(lab); box.appendChild(row); return box;
+  }
+  function group(title, kids){ var g = el('section', 'group'); g.appendChild(el('h2', null, title)); kids.forEach(function(k){ g.appendChild(k); }); return g; }
+  function two(a, b){ var d = el('div', 'two'); d.appendChild(a); d.appendChild(b); return d; }
+
+  var root = document.getElementById('controls');
+  root.appendChild(group('Dispersion', [range('spread'), two(range('samples'), chips('mode', 'seg'))]));
+  root.appendChild(group('Verzerrung', [chips('warp_type'), two(range('warp_strength'), range('warp_complexity')), two(range('warp_scale'), range('warp_symmetry')), two(range('phase'), range('warp_speed'))]));
+  root.appendChild(group('Richtung & Rand', [xy(), two(range('warp_decay'), range('warp_blend'))]));
+  root.appendChild(group('Textur', [two(range('grain'), seed())]));
+
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d'), wait = document.getElementById('wait');
+  pb.onState(function(s){
+    if (s.output){ if (cv.width !== s.output.width){ cv.width = s.output.width; cv.height = s.output.height; } ctx.putImageData(s.output, 0, 0); wait.hidden = true; }
+    else wait.hidden = false;
+  });
+}
+
+fetch(BASE + 'patchbay.json').then(function(r){ return r.json(); }).then(function(manifest){
+  Patchbay.tool({ manifest: manifest, render: render, sample: sample, ui: ui });
+}).catch(function(err){ document.getElementById('wait').textContent = 'Manifest konnte nicht geladen werden: ' + err.message; });
+})();
+</script>
+</body>
+</html>

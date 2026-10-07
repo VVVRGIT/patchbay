@@ -1429,7 +1429,7 @@ brandBtn.addEventListener('click', function(){
 document.addEventListener('pointerdown', function(e){ if (!brandMenu.hidden && !brandBtn.parentNode.contains(e.target)) closeBrand(); });
 
 /* ---------- Eingebundene Tools ---------- */
-var TOOL_STORE = 'patchbay.tools.v1', DEFAULT_EXTERNAL = ['/tools/halbton/patchbay.json'];
+var TOOL_STORE = 'patchbay.tools.v1', DEFAULT_EXTERNAL = ['/tools/halbton/patchbay.json', '/tools/dsprsn/patchbay.json'];
 var PALETTE = ['#0E8C8C', '#D9480F', '#5C7CFA', '#AE3EC9', '#2B8A3E'];
 function savedToolUrls(){ try { var a = JSON.parse(localStorage.getItem(TOOL_STORE) || '[]'); return Array.isArray(a) ? a.filter(function(x){ return typeof x === 'string'; }) : []; } catch(e){ return []; } }
 function rememberToolUrl(u){

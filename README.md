@@ -68,7 +68,7 @@ Rechnen, Kabel, Cache und Historie bleiben in beiden Modi beim Host. Tools ohne 
 3. Im Deck: **Neues Tool → Tool per URL einbinden** → Adresse des Manifests eintragen.
 
 Parameter-Typen: `int`, `number`, `bool`, `enum` (mit `options`, optional `labels`), `color`, `string`, `prompt`, `seed`.
-Beispiel mit eigener Gestaltung: [`tools/halbton`](tools/halbton) (live: `/tools/halbton/`).
+Beispiele mit eigener Gestaltung: [`tools/halbton`](tools/halbton) (live: `/tools/halbton/`) und [`tools/dsprsn`](tools/dsprsn) (live: `/tools/dsprsn/`, Effekt ursprünglich mit Brik erstellt und als reine, reproduzierbare `render`-Funktion portiert; Phase und Seed ersetzen Animation und Zufall).
 
 ### Web-Tools ohne Patchbay
 
