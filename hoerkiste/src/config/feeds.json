@@ -1,77 +1,162 @@
 [
   {
     "id": "checkpod",
-    "name": { "de": "CheckPod", "es": "CheckPod" },
+    "name": {
+      "de": "CheckPod",
+      "es": "CheckPod"
+    },
     "feedUrl": "https://feeds.br.de/checkpod-der-podcast-mit-checker-tobi/feed.xml",
     "color": "#FFB703",
     "language": "de"
   },
   {
     "id": "betthupferl",
-    "name": { "de": "Betthupferl", "es": "Betthupferl" },
+    "name": {
+      "de": "Betthupferl",
+      "es": "Betthupferl"
+    },
     "feedUrl": "https://feeds.br.de/betthupferl/feed.xml",
     "color": "#8ECAE6",
     "language": "de"
   },
   {
     "id": "kakadu",
-    "name": { "de": "Kakadu", "es": "Kakadu" },
+    "name": {
+      "de": "Kakadu",
+      "es": "Kakadu"
+    },
     "feedUrl": "https://www.kakadu.de/kakadu-104.xml",
     "color": "#90BE6D",
     "language": "de"
   },
   {
     "id": "ohrenbaer",
-    "name": { "de": "Ohrenbär", "es": "Ohrenbär" },
+    "name": {
+      "de": "Ohrenbär",
+      "es": "Ohrenbär"
+    },
     "feedUrl": "https://www.ohrenbaer.de/podcast/podcast.feed.podcast.xml",
     "color": "#E9C46A",
     "language": "de"
   },
   {
     "id": "mikado",
-    "name": { "de": "Mikado", "es": "Mikado" },
+    "name": {
+      "de": "Mikado",
+      "es": "Mikado"
+    },
     "feedUrl": "https://www.ndr.de/nachrichten/info/podcast4223.xml",
     "color": "#4CC9F0",
     "language": "de"
   },
   {
     "id": "mauszoom",
-    "name": { "de": "MausZoom", "es": "MausZoom" },
+    "name": {
+      "de": "MausZoom",
+      "es": "MausZoom"
+    },
     "feedUrl": "https://kinder.wdr.de/radio/diemaus/audio/maus-zoom/maus-zoom-106.podcast",
     "color": "#FB8500",
     "language": "de"
   },
   {
     "id": "maus-gute-nacht",
-    "name": { "de": "Gute Nacht mit der Maus", "es": "Buenas noches, Maus" },
+    "name": {
+      "de": "Gute Nacht mit der Maus",
+      "es": "Buenas noches, Maus"
+    },
     "feedUrl": "https://kinder.wdr.de/radio/diemaus/audio/gute-nacht-mit-der-maus/diemaus-gute-nacht-104.podcast",
     "color": "#7B8CDE",
     "language": "de"
   },
   {
     "id": "figarino",
-    "name": { "de": "Figarinos Fahrradladen", "es": "Figarinos Fahrradladen" },
+    "name": {
+      "de": "Figarinos Fahrradladen",
+      "es": "Figarinos Fahrradladen"
+    },
     "feedUrl": "https://www.mdr.de/tweens/podcast/figarino/fahrradladen-mdr-100.xml",
     "color": "#F4A261",
     "language": "de"
   },
   {
     "id": "mikado-zeitreise",
-    "name": { "de": "Mikado Zeitreise", "es": "Mikado Zeitreise" },
+    "name": {
+      "de": "Mikado Zeitreise",
+      "es": "Mikado Zeitreise"
+    },
     "feedUrl": "https://www.ndr.de/podcast/podcast4608.xml",
     "color": "#48CAE4",
     "language": "de"
   },
   {
     "id": "eric-erforscht",
-    "name": { "de": "Eric erforscht", "es": "Eric erforscht" },
+    "name": {
+      "de": "Eric erforscht",
+      "es": "Eric erforscht"
+    },
     "feedUrl": "https://ericerforscht.libsyn.com/rss",
     "color": "#A7C957",
     "language": "de"
   },
   {
+    "id": "lachlabor",
+    "name": {
+      "de": "Lachlabor",
+      "es": "Lachlabor"
+    },
+    "feedUrl": "https://feeds.br.de/lachlabor/feed.xml",
+    "color": "#FF9F1C",
+    "language": "de"
+  },
+  {
+    "id": "anna-wilde-tiere",
+    "name": {
+      "de": "Anna und die wilden Tiere",
+      "es": "Anna y los animales"
+    },
+    "feedUrl": "https://feeds.br.de/anna-und-die-wilden-tiere/feed.xml",
+    "color": "#80B918",
+    "language": "de"
+  },
+  {
+    "id": "mikado-macht-schlau",
+    "name": {
+      "de": "Mikado macht schlau",
+      "es": "Mikado macht schlau"
+    },
+    "feedUrl": "https://www.ndr.de/nachrichten/info/sendungen/mikado/podcast4472.xml",
+    "color": "#00B4D8",
+    "language": "de"
+  },
+  {
+    "id": "was-ist-was",
+    "name": {
+      "de": "WAS IST WAS",
+      "es": "WAS IST WAS"
+    },
+    "feedUrl": "https://feeds.megaphone.fm/KBBF5520541713",
+    "color": "#E63946",
+    "language": "de",
+    "verified": false
+  },
+  {
+    "id": "flipsi",
+    "name": {
+      "de": "Flipsi findet's raus",
+      "es": "Flipsi findet's raus"
+    },
+    "feedUrl": "https://flipsi-findets-raus.podigee.io/feed/mp3",
+    "color": "#FFD60A",
+    "language": "de",
+    "verified": false
+  },
+  {
     "id": "maus",
-    "name": { "de": "Die Maus zum Hören", "es": "Die Maus zum Hören" },
+    "name": {
+      "de": "Die Maus zum Hören",
+      "es": "Die Maus zum Hören"
+    },
     "feedUrl": "https://kinder.wdr.de/radio/diemaus/audio/diemaus-60/diemaus-60-106.podcast",
     "color": "#F77F00",
     "language": "de",
@@ -79,7 +164,10 @@
   },
   {
     "id": "kakadu-hoerspiel",
-    "name": { "de": "Kakadu Hörspiel", "es": "Kakadu Hörspiel" },
+    "name": {
+      "de": "Kakadu Hörspiel",
+      "es": "Kakadu Hörspiel"
+    },
     "feedUrl": "https://www.kakadu.de/kinderhoerspiel-118.xml",
     "color": "#B5E48C",
     "language": "de",
@@ -87,56 +175,80 @@
   },
   {
     "id": "craneo",
-    "name": { "de": "Cráneo", "es": "Cráneo" },
+    "name": {
+      "de": "Cráneo",
+      "es": "Cráneo"
+    },
     "feedUrl": "https://anchor.fm/s/e6f41280/podcast/rss",
     "color": "#F28482",
     "language": "es"
   },
   {
     "id": "camaleon",
-    "name": { "de": "Camaleón", "es": "Camaleón" },
+    "name": {
+      "de": "Camaleón",
+      "es": "Camaleón"
+    },
     "feedUrl": "https://anchor.fm/s/f001a2fc/podcast/rss",
     "color": "#84A59D",
     "language": "es"
   },
   {
     "id": "buenas-noches-craneo",
-    "name": { "de": "Buenas noches, Cráneo", "es": "Buenas noches, Cráneo" },
+    "name": {
+      "de": "Buenas noches, Cráneo",
+      "es": "Buenas noches, Cráneo"
+    },
     "feedUrl": "https://anchor.fm/s/ec60d2d0/podcast/rss",
     "color": "#9D8DF1",
     "language": "es"
   },
   {
     "id": "sapiensantes",
-    "name": { "de": "Sapiensantes", "es": "Sapiensantes" },
+    "name": {
+      "de": "Sapiensantes",
+      "es": "Sapiensantes"
+    },
     "feedUrl": "https://api.rtve.es/api/adapter/programas/1000883/audios.rss",
     "color": "#FF8FAB",
     "language": "es"
   },
   {
     "id": "contando-cuentos",
-    "name": { "de": "Contando cuentos", "es": "Contando cuentos" },
+    "name": {
+      "de": "Contando cuentos",
+      "es": "Contando cuentos"
+    },
     "feedUrl": "https://api.rtve.es/api/programas/1915/audios.rss",
     "color": "#FFAFCC",
     "language": "es"
   },
   {
     "id": "cuentos-increibles",
-    "name": { "de": "Cuentos Increíbles", "es": "Cuentos Increíbles" },
+    "name": {
+      "de": "Cuentos Increíbles",
+      "es": "Cuentos Increíbles"
+    },
     "feedUrl": "https://feeds.simplecast.com/u8akwBSW",
     "color": "#FFC300",
     "language": "es"
   },
   {
     "id": "suenacuentos",
-    "name": { "de": "Sueñacuentos", "es": "Sueñacuentos" },
+    "name": {
+      "de": "Sueñacuentos",
+      "es": "Sueñacuentos"
+    },
     "feedUrl": "https://feeds.buzzsprout.com/2246646.rss",
     "color": "#BDB2FF",
     "language": "es"
   },
   {
     "id": "habia-una-vez",
-    "name": { "de": "Había una vez", "es": "Había una vez" },
+    "name": {
+      "de": "Había una vez",
+      "es": "Había una vez"
+    },
     "feedUrl": "https://feeds.acast.com/public/shows/6446e30da189ca00112be9de",
     "color": "#E5989B",
     "language": "es",
@@ -144,7 +256,10 @@
   },
   {
     "id": "cuentos-infantiles",
-    "name": { "de": "Cuentos infantiles", "es": "Cuentos infantiles" },
+    "name": {
+      "de": "Cuentos infantiles",
+      "es": "Cuentos infantiles"
+    },
     "feedUrl": "https://feeds.ivoox.com/feed_fg_f1793_filtro_1.xml",
     "color": "#B5838D",
     "language": "es",

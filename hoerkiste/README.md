@@ -67,13 +67,14 @@ Für einen neuen Feed trägst du in `src/config/feeds.json` einen Eintrag ein:
 
 ### Stand der Senderliste
 
-Insgesamt 21 Sender, 12 deutsche und 9 spanische. Keiner der Feeds wurde aus der Entwicklungsumgebung abgerufen, weil sie keine Feed-Hosts erreicht. Die Adressen stammen aus Podcast-Verzeichnissen (Podchaser, podcast.de, Podnews u. a.).
+Insgesamt 26 Sender, 17 deutsche und 9 spanische. Keiner der Feeds wurde aus der Entwicklungsumgebung abgerufen, weil sie keine Feed-Hosts erreicht. Die Adressen stammen aus Podcast-Verzeichnissen (Podchaser, podcast.de, Podnews u. a.) und der Liste von mupibox.de.
 
 | Status | Sender |
 | --- | --- |
-| Sichtbar (Adresse aus Verzeichnissen) | CheckPod, Betthupferl, Kakadu, Ohrenbär, Mikado, MausZoom, Gute Nacht mit der Maus, Figarinos Fahrradladen, Mikado Zeitreise, Eric erforscht · Cráneo, Camaleón, Buenas noches Cráneo, Sapiensantes, Contando cuentos, Cuentos Increíbles, Sueñacuentos |
+| Sichtbar (Adresse aus Verzeichnissen) | CheckPod, Betthupferl, Kakadu, Ohrenbär, Mikado, MausZoom, Gute Nacht mit der Maus, Figarinos Fahrradladen, Mikado Zeitreise, Eric erforscht, Lachlabor, Anna und die wilden Tiere, Mikado macht schlau · Cráneo, Camaleón, Buenas noches Cráneo, Sapiensantes, Contando cuentos, Cuentos Increíbles, Sueñacuentos |
 | `verified: false` (Adresse geraten oder schwach) | Die Maus zum Hören, Kakadu Hörspiel, Había una vez, Cuentos infantiles |
-| Nicht aufgenommen | WDR 5 Kinderhörspiel (keine Feed-Adresse gefunden), WAS IST WAS und Wirklich wahr! (kein offener Feed), ECHT?! (KI-Stimmen) |
+| `verified: false` (mögliche Werbeeinblendungen über Megaphone/Podigee, erst anhören) | WAS IST WAS, Flipsi findet's raus |
+| Nicht aufgenommen | WDR 5 Kinderhörspiel (keine Feed-Adresse gefunden), Wirklich wahr! (kein offener Feed), radioMikro, Do Re Mikro, Rikes Laberbuch, Krümel-Geschichten (Feed-Adresse nicht gefunden), ECHT?! (KI-Stimmen) |
 
 Hinweise:
 - Sender, deren Feed nicht lädt, blendet die Startseite automatisch aus.
