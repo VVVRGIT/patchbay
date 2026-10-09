@@ -1,0 +1,68 @@
+{
+  "app": { "name": "Hörkiste" },
+  "home": {
+    "title": "Was möchtest du hören?",
+    "empty": "Gerade ist keine Sendung da."
+  },
+  "list": {
+    "back": "Zurück",
+    "new": "Neu",
+    "heard": "Schon gehört",
+    "progress": "{{percent}} % gehört",
+    "minutes": "{{count}} Min."
+  },
+  "player": {
+    "play": "Abspielen",
+    "pause": "Pause",
+    "back15": "15 Sekunden zurück",
+    "forward15": "15 Sekunden vor",
+    "seek": "Stelle in der Folge",
+    "close": "Zur Folgenliste",
+    "open": "Player öffnen",
+    "sleep": "Einschlaf-Timer",
+    "sleepOff": "Aus",
+    "sleepIn": "Stoppt in {{count}} Min.",
+    "loading": "Lädt …"
+  },
+  "error": {
+    "title": "Hoppla, das hat nicht geklappt.",
+    "retry": "Nochmal",
+    "audio": "Diese Folge lässt sich gerade nicht abspielen."
+  },
+  "gate": {
+    "open": "Elternbereich (gedrückt halten)",
+    "title": "Für Eltern",
+    "hint": "Halte das Zahnrad 2 Sekunden gedrückt – oder löse die Aufgabe:",
+    "question": "{{a}} × {{b}} = ?",
+    "answer": "Ergebnis",
+    "ok": "OK",
+    "delete": "Löschen",
+    "wrong": "Leider falsch. Neue Aufgabe!",
+    "cancel": "Abbrechen"
+  },
+  "parents": {
+    "title": "Elternbereich",
+    "close": "Schließen",
+    "language": "Sprache der Oberfläche",
+    "languageNote": "Die Sendungen selbst bleiben in ihrer Originalsprache.",
+    "feeds": "Sendungen",
+    "feedsNote": "Ungeprüfte Sendungen sind ausgeblendet, bis du sie testest und einschaltest.",
+    "unverified": "ungeprüft",
+    "status": {
+      "checking": "wird geprüft …",
+      "ok": "erreichbar · {{count}} Folgen",
+      "fail": "nicht erreichbar"
+    },
+    "check": "Testen",
+    "show": "{{name}} anzeigen",
+    "playback": "Wiedergabe",
+    "autoplay": "Nach einer Folge automatisch die nächste spielen",
+    "reset": "Gehört-Status zurücksetzen",
+    "resetConfirm": "Wirklich alle Haken und Fortschritte löschen?",
+    "resetDone": "Zurückgesetzt.",
+    "sources": "Datenquellen",
+    "sourcesText": "Die Folgenlisten kommen aus den öffentlichen RSS-Feeds der Anbieter. Unser Server liest die Feeds nur ein; die Audiodateien werden direkt vom Anbieter abgespielt. Es gibt keine Werbung, kein Tracking und keine Konten. Fortschritt und Einstellungen bleiben auf diesem Gerät.",
+    "version": "Version {{version}}"
+  },
+  "lang": { "de": "Deutsch", "es": "Español", "switch": "Sprache" }
+}

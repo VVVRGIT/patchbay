@@ -1,0 +1,68 @@
+{
+  "app": { "name": "Hörkiste" },
+  "home": {
+    "title": "¿Qué quieres escuchar?",
+    "empty": "Ahora mismo no hay ningún programa."
+  },
+  "list": {
+    "back": "Atrás",
+    "new": "Nuevo",
+    "heard": "Ya escuchado",
+    "progress": "{{percent}} % escuchado",
+    "minutes": "{{count}} min"
+  },
+  "player": {
+    "play": "Reproducir",
+    "pause": "Pausa",
+    "back15": "Retroceder 15 segundos",
+    "forward15": "Avanzar 15 segundos",
+    "seek": "Posición en el episodio",
+    "close": "Volver a la lista",
+    "open": "Abrir reproductor",
+    "sleep": "Temporizador para dormir",
+    "sleepOff": "Apagado",
+    "sleepIn": "Se para en {{count}} min",
+    "loading": "Cargando…"
+  },
+  "error": {
+    "title": "Uy, algo no ha funcionado.",
+    "retry": "Otra vez",
+    "audio": "Este episodio no se puede reproducir ahora."
+  },
+  "gate": {
+    "open": "Zona para padres (mantener pulsado)",
+    "title": "Para padres",
+    "hint": "Mantén pulsada la rueda 2 segundos o resuelve la operación:",
+    "question": "{{a}} × {{b}} = ?",
+    "answer": "Resultado",
+    "ok": "OK",
+    "delete": "Borrar",
+    "wrong": "No es correcto. ¡Nueva operación!",
+    "cancel": "Cancelar"
+  },
+  "parents": {
+    "title": "Zona para padres",
+    "close": "Cerrar",
+    "language": "Idioma de la interfaz",
+    "languageNote": "Los programas se mantienen en su idioma original.",
+    "feeds": "Programas",
+    "feedsNote": "Los programas sin verificar están ocultos hasta que los pruebes y los actives.",
+    "unverified": "sin verificar",
+    "status": {
+      "checking": "comprobando…",
+      "ok": "disponible · {{count}} episodios",
+      "fail": "no disponible"
+    },
+    "check": "Probar",
+    "show": "Mostrar {{name}}",
+    "playback": "Reproducción",
+    "autoplay": "Reproducir automáticamente el siguiente episodio",
+    "reset": "Borrar el estado de escuchado",
+    "resetConfirm": "¿Seguro que quieres borrar todas las marcas y el progreso?",
+    "resetDone": "Borrado.",
+    "sources": "Fuentes de datos",
+    "sourcesText": "Las listas de episodios vienen de los feeds RSS públicos de cada emisora. Nuestro servidor solo lee los feeds; el audio se reproduce directamente desde la emisora. No hay publicidad, ni seguimiento, ni cuentas. El progreso y los ajustes se quedan en este dispositivo.",
+    "version": "Versión {{version}}"
+  },
+  "lang": { "de": "Deutsch", "es": "Español", "switch": "Idioma" }
+}

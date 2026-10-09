@@ -1,0 +1,57 @@
+[
+  {
+    "id": "checkpod",
+    "name": { "de": "CheckPod", "es": "CheckPod" },
+    "feedUrl": "https://feeds.br.de/checkpod-der-podcast-mit-checker-tobi/feed.xml",
+    "color": "#FFB703",
+    "language": "de"
+  },
+  {
+    "id": "betthupferl",
+    "name": { "de": "Betthupferl", "es": "Betthupferl" },
+    "feedUrl": "https://feeds.br.de/betthupferl/feed.xml",
+    "color": "#8ECAE6",
+    "language": "de",
+    "verified": false
+  },
+  {
+    "id": "maus",
+    "name": { "de": "Die Maus zum Hören", "es": "Die Maus (alemán)" },
+    "feedUrl": "https://kinder.wdr.de/radio/diemaus/audio/maus-zum-hoeren/maus-zum-hoeren-106.podcast",
+    "color": "#FB8500",
+    "language": "de",
+    "verified": false
+  },
+  {
+    "id": "ohrenbaer",
+    "name": { "de": "Ohrenbär", "es": "Ohrenbär" },
+    "feedUrl": "https://www.ohrenbaer.de/podcast/podcast.xml/feed=podcast.xml",
+    "color": "#E9C46A",
+    "language": "de",
+    "verified": false
+  },
+  {
+    "id": "kakadu",
+    "name": { "de": "Kakadu", "es": "Kakadu" },
+    "feedUrl": "https://www.deutschlandfunkkultur.de/kakadu-104.xml",
+    "color": "#90BE6D",
+    "language": "de",
+    "verified": false
+  },
+  {
+    "id": "habia-una-vez",
+    "name": { "de": "Había una vez", "es": "Había una vez" },
+    "feedUrl": "https://feeds.acast.com/public/shows/6446e30da189ca00112be9de",
+    "color": "#F28482",
+    "language": "es",
+    "verified": false
+  },
+  {
+    "id": "cuentos-infantiles",
+    "name": { "de": "Cuentos infantiles", "es": "Cuentos infantiles" },
+    "feedUrl": "https://feeds.ivoox.com/feed_fg_f1793_filtro_1.xml",
+    "color": "#B5838D",
+    "language": "es",
+    "verified": false
+  }
+]
