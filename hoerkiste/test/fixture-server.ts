@@ -1,14 +1,22 @@
 import { readFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 
-const CHECKPOD = 'https://feeds.br.de/checkpod-der-podcast-mit-checker-tobi/feed.xml';
 const xml = readFileSync(new URL('./fixtures/checkpod.xml', import.meta.url), 'utf8');
 
-/** Liefert den CheckPod-Fixture-Feed; alle anderen Feeds sind „nicht erreichbar“. */
+/** Feeds, die im Fixture-Modus antworten (Varianten des CheckPod-Fixtures); alle anderen sind „nicht erreichbar“. */
+const FIXTURE_FEEDS: Record<string, (x: string) => string> = {
+  'https://feeds.br.de/checkpod-der-podcast-mit-checker-tobi/feed.xml': (x) => x,
+  'https://feeds.br.de/betthupferl/feed.xml': (x) =>
+    x.replace('CheckPod - Der Podcast mit Checker Tobi', 'Betthupferl').replace('Wie funktioniert ein Vulkan?', 'Der kleine Mond').replace('Warum ist der Himmel blau? &amp; andere Fragen', 'Bubu und der Regen').replaceAll('ep-', 'bh-'),
+  'https://anchor.fm/s/e6f41280/podcast/rss': (x) =>
+    x.replace('CheckPod - Der Podcast mit Checker Tobi', 'Cráneo').replace('Wie funktioniert ein Vulkan?', '¿Por qué tienen manchas los jaguares?').replace('Warum ist der Himmel blau? &amp; andere Fragen', '¿Cómo es un copo de nieve?').replaceAll('ep-', 'cr-').replaceAll('himmel', 'nieve'),
+};
+
 export function fixtureFetch(origin: string) {
   return async (url: string) => {
-    if (url !== CHECKPOD) throw new Error('offline (fixture)');
-    const body = xml
+    const variant = FIXTURE_FEEDS[url];
+    if (!variant) throw new Error('offline (fixture)');
+    const body = variant(xml)
       .replaceAll('https://media.example.org/', `${origin}/__fixtures/`)
       .replaceAll('https://img.example.org/', `${origin}/__fixtures/`)
       .replace(/\.mp3"/g, '.wav"')

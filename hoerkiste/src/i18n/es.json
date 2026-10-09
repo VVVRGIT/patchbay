@@ -1,8 +1,18 @@
 {
-  "app": { "name": "Hörkiste" },
+  "app": {
+    "name": "Hörkiste"
+  },
   "home": {
     "title": "¿Qué quieres escuchar?",
-    "empty": "Ahora mismo no hay ningún programa."
+    "empty": "Ahora mismo no hay ningún programa.",
+    "filter": "Mostrar programas",
+    "filterAll": "Todos los programas",
+    "filterDe": "Programas en alemán",
+    "filterEs": "Programas en español",
+    "filterFav": "Mis favoritos",
+    "favAdd": "Marcar {{name}} como favorito",
+    "noFav": "Toca un corazón y el programa aparecerá aquí.",
+    "showLang": "Programa en {{lang}}"
   },
   "list": {
     "back": "Atrás",
@@ -22,7 +32,10 @@
     "sleep": "Temporizador para dormir",
     "sleepOff": "Apagado",
     "sleepIn": "Se para en {{count}} min",
-    "loading": "Cargando…"
+    "loading": "Cargando…",
+    "next": "Episodio siguiente",
+    "previous": "Episodio anterior",
+    "fromPlaylist": "De tu lista"
   },
   "error": {
     "title": "Uy, algo no ha funcionado.",
@@ -64,5 +77,22 @@
     "sourcesText": "Las listas de episodios vienen de los feeds RSS públicos de cada emisora. Nuestro servidor solo lee los feeds; el audio se reproduce directamente desde la emisora. No hay publicidad, ni seguimiento, ni cuentas. El progreso y los ajustes se quedan en este dispositivo.",
     "version": "Versión {{version}}"
   },
-  "lang": { "de": "Deutsch", "es": "Español", "switch": "Idioma" }
+  "lang": {
+    "de": "Deutsch",
+    "es": "Español",
+    "switch": "Idioma",
+    "showDe": "alemán",
+    "showEs": "español"
+  },
+  "playlist": {
+    "title": "Mi lista",
+    "open": "Mi lista ({{count}})",
+    "add": "Añadir a mi lista",
+    "remove": "Quitar de mi lista",
+    "playAll": "Reproducir todo",
+    "empty": "Todavía está vacía. Toca el más en un episodio.",
+    "up": "Subir",
+    "clear": "Vaciar mi lista",
+    "clearConfirm": "¿Seguro que quieres quitar todos los episodios de la lista?"
+  }
 }

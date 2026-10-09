@@ -1,16 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { Episode } from '../lib/feeds';
+import { sameItem, type QueueItem } from '../lib/playlist';
 import { episodeKey, getProgress, markDone, setProgress } from '../lib/progress';
 import { getSettings } from '../lib/settings';
 
-export interface NowPlaying {
-  feedId: string;
-  feedName: string;
-  color: string;
-  cover: string | null;
-  episode: Episode;
-  /** Folgenliste in Anzeigereihenfolge, für optionales Autoplay */
-  queue: Episode[];
+export interface NowPlaying extends QueueItem {
+  /** Reihenfolge zum Weiterspielen: Folgenliste eines Senders oder die Playlist */
+  queue: QueueItem[];
+  /** 'playlist' spielt immer weiter, 'feed' nur mit Autoplay aus dem Elternbereich */
+  source: 'feed' | 'playlist';
 }
 
 interface PlayerState {
@@ -31,12 +28,22 @@ interface PlayerApi extends PlayerState {
   skip: (delta: number) => void;
   seek: (t: number) => void;
   setSleep: (minutes: number | null) => void;
+  /** Nächste/vorige Folge der Warteschlange, falls vorhanden */
+  next: () => void;
+  previous: () => void;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 const Ctx = createContext<PlayerApi | null>(null);
 
 export const SAVE_INTERVAL_MS = 5000;
 export const SKIP_SECONDS = 15;
+
+function neighbour(np: NowPlaying, delta: 1 | -1): QueueItem | undefined {
+  const idx = np.queue.findIndex((q) => sameItem(q, np));
+  return idx >= 0 ? np.queue[idx + delta] : undefined;
+}
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -78,7 +85,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const start = useCallback(
     (np: NowPlaying) => {
       const prev = currentRef.current;
-      if (prev && prev.feedId === np.feedId && prev.episode.id === np.episode.id) {
+      if (prev && sameItem(prev, np)) {
         setCurrent(np);
         if (audio.paused) play();
         return;
@@ -123,6 +130,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const skip = useCallback((delta: number) => seek(audio.currentTime + delta), [audio, seek]);
 
+  const jump = useCallback(
+    (delta: 1 | -1) => {
+      const np = currentRef.current;
+      const target = np && neighbour(np, delta);
+      if (np && target) start({ ...target, queue: np.queue, source: np.source });
+    },
+    [start],
+  );
+  const next = useCallback(() => jump(1), [jump]);
+  const previous = useCallback(() => jump(-1), [jump]);
+  const hasNext = !!current && !!neighbour(current, 1);
+  const hasPrevious = !!current && !!neighbour(current, -1);
+
   // Audio-Events
   useEffect(() => {
     const onPlay = () => setPlaying(true);
@@ -144,10 +164,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setPlaying(false);
       if (!np) return;
       markDone(episodeKey(np.feedId, np.episode.id), audio.duration || np.episode.duration || 0);
-      if (getSettings().autoplayNext) {
-        const idx = np.queue.findIndex((e) => e.id === np.episode.id);
-        const next = idx >= 0 ? np.queue[idx + 1] : undefined;
-        if (next) start({ ...np, episode: next });
+      if (np.source === 'playlist' || getSettings().autoplayNext) {
+        const nextItem = neighbour(np, 1);
+        if (nextItem) start({ ...nextItem, queue: np.queue, source: np.source });
       }
     };
     const events: [string, () => void][] = [
@@ -214,7 +233,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
     const ms = navigator.mediaSession;
-    const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
+    const handlers: [MediaSessionAction, MediaSessionActionHandler | null][] = [
       ['play', () => play()],
       ['pause', () => pause()],
       ['stop', () => pause()],
@@ -222,6 +241,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       ['seekforward', (d) => skip(d.seekOffset ?? SKIP_SECONDS)],
       ['seekto', (d) => d.seekTime != null && seek(d.seekTime)],
     ];
+    // Vor/Zurück nur in der Playlist – sonst bleiben ±15 s auf dem Sperrbildschirm
+    const playlistMode = current?.source === 'playlist';
+    handlers.push(['nexttrack', playlistMode && hasNext ? () => next() : null]);
+    handlers.push(['previoustrack', playlistMode && hasPrevious ? () => previous() : null]);
     for (const [action, h] of handlers) {
       try {
         ms.setActionHandler(action, h);
@@ -238,7 +261,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
       }
     };
-  }, [play, pause, skip, seek]);
+  }, [play, pause, skip, seek, next, previous, hasNext, hasPrevious, current?.source]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
@@ -261,8 +284,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [audio, time, duration, playing]);
 
   const value = useMemo<PlayerApi>(
-    () => ({ current, playing, loading, error, time, duration, sleepEndsAt, start, toggle, play, pause, skip, seek, setSleep }),
-    [current, playing, loading, error, time, duration, sleepEndsAt, start, toggle, play, pause, skip, seek, setSleep],
+    () => ({ current, playing, loading, error, time, duration, sleepEndsAt, start, toggle, play, pause, skip, seek, setSleep, next, previous, hasNext, hasPrevious }),
+    [current, playing, loading, error, time, duration, sleepEndsAt, start, toggle, play, pause, skip, seek, setSleep, next, previous, hasNext, hasPrevious],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

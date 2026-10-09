@@ -27,7 +27,8 @@ export function PlayerScreen() {
   }, [p.sleepEndsAt]);
 
   if (!p.current) return null;
-  const { episode, color, cover, feedId } = p.current;
+  const { episode, color, cover, feedId, source } = p.current;
+  const backTo = source === 'playlist' ? ({ name: 'playlist' } as const) : ({ name: 'feed', feedId } as const);
   const shown = drag ?? p.time;
   const max = p.duration || episode.duration || 0;
   const commit = () => {
@@ -39,9 +40,19 @@ export function PlayerScreen() {
   return (
     <main className="screen player" style={{ ['--feed' as string]: color }}>
       <header className="topbar">
-        <button type="button" className="round-btn" aria-label={t('player.close')} onClick={() => goBack({ name: 'feed', feedId })}>
+        <button type="button" className="round-btn" aria-label={t('player.close')} onClick={() => goBack(backTo)}>
           <Icon name="down" size={36} />
         </button>
+        {source === 'playlist' && (
+          <div className="track-nav">
+            <button type="button" className="round-btn" aria-label={t('player.previous')} disabled={!p.hasPrevious} onClick={p.previous}>
+              <Icon name="prev" size={30} />
+            </button>
+            <button type="button" className="round-btn" aria-label={t('player.next')} disabled={!p.hasNext} onClick={p.next}>
+              <Icon name="next" size={30} />
+            </button>
+          </div>
+        )}
         <button
           type="button"
           className={p.sleepEndsAt ? 'round-btn sleep active' : 'round-btn sleep'}
@@ -73,6 +84,11 @@ export function PlayerScreen() {
         </div>
 
         <div className="player-controls">
+          {source === 'playlist' && (
+            <p className="player-source">
+              <Icon name="playlist" size={22} /> {t('player.fromPlaylist')}
+            </p>
+          )}
           <h1 className="player-title">{episode.title}</h1>
 
           {p.error ? (
@@ -117,6 +133,7 @@ export function PlayerScreen() {
                   <SkipIcon dir={1} />
                 </button>
               </div>
+
             </>
           )}
         </div>

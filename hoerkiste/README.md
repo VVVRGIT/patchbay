@@ -15,7 +15,7 @@ npm run build        # Typecheck + Produktions-Build nach dist/
 npm run preview      # Build lokal ansehen, inkl. Service Worker und /api/feed
 ```
 
-Ohne Internet: `HK_FIXTURES=1 npm run dev` liefert den CheckPod-Feed aus `test/fixtures/` mit einem kurzen Testton als Audio. Alle anderen Feeds gelten dann als „nicht erreichbar“.
+Ohne Internet: `HK_FIXTURES=1 npm run dev` liefert Testfeeds für CheckPod, Betthupferl und Cráneo aus `test/fixtures/` mit einem kurzen Testton als Audio. Alle anderen Feeds gelten dann als „nicht erreichbar“.
 
 ## Aufbau
 
@@ -57,7 +57,9 @@ Für einen neuen Feed trägst du in `src/config/feeds.json` einen Eintrag ein:
 }
 ```
 
-1. Den Eintrag zunächst mit `"verified": false` anlegen. Kinder sehen ungeprüfte Sender nicht.
+`language` (`de` oder `es`) steuert den Flaggen-Filter auf der Startseite.
+
+1. Bei unsicherer Adresse den Eintrag mit `"verified": false` anlegen. Kinder sehen den Sender dann nicht.
 2. Deployen, im **Elternbereich** auf „Testen“ tippen und prüfen, ob „erreichbar · N Folgen“ erscheint. Dann eine Folge probehören.
 3. Passt alles, entweder dort den Schalter einschalten (gilt nur für dieses Gerät) oder `"verified": false` entfernen (gilt für alle).
 
@@ -65,12 +67,19 @@ Für einen neuen Feed trägst du in `src/config/feeds.json` einen Eintrag ein:
 
 ### Stand der Senderliste
 
-| Sender | Status |
+Insgesamt 21 Sender, 12 deutsche und 9 spanische. Keiner der Feeds wurde aus der Entwicklungsumgebung abgerufen, weil sie keine Feed-Hosts erreicht. Die Adressen stammen aus Podcast-Verzeichnissen (Podchaser, podcast.de, Podnews u. a.).
+
+| Status | Sender |
 | --- | --- |
-| CheckPod (BR) | URL aus dem Briefing, als geprüft eingetragen |
-| Betthupferl (BR), Die Maus zum Hören (WDR), Ohrenbär (rbb), Kakadu (Dlf Kultur) | `verified: false`. Die URLs sind recherchiert bzw. aus dem URL-Schema der Anbieter abgeleitet und noch **nicht** abgerufen |
-| Había una vez (Acast), Cuentos infantiles (iVoox) | `verified: false`. Spanischsprachige Kandidaten aus Verzeichnissen, ebenfalls ungeprüft |
-| RTVE / RNE | Kein öffentlicher Kinder-Feed gefunden. Bitte bei Bedarf über rtve.es/play/radio nachrecherchieren |
+| Sichtbar (Adresse aus Verzeichnissen) | CheckPod, Betthupferl, Kakadu, Ohrenbär, Mikado, MausZoom, Gute Nacht mit der Maus, Figarinos Fahrradladen, Mikado Zeitreise, Eric erforscht · Cráneo, Camaleón, Buenas noches Cráneo, Sapiensantes, Contando cuentos, Cuentos Increíbles, Sueñacuentos |
+| `verified: false` (Adresse geraten oder schwach) | Die Maus zum Hören, Kakadu Hörspiel, Había una vez, Cuentos infantiles |
+| Nicht aufgenommen | WDR 5 Kinderhörspiel (keine Feed-Adresse gefunden), WAS IST WAS und Wirklich wahr! (kein offener Feed), ECHT?! (KI-Stimmen) |
+
+Hinweise:
+- Sender, deren Feed nicht lädt, blendet die Startseite automatisch aus.
+- Mikado Zeitreise und Eric erforscht bekommen keine neuen Folgen mehr, das Archiv bleibt hörbar.
+- Für Buenas noches, Cráneo gibt es eine zweite Adresse: `https://rss.buzzsprout.com/2635354.rss`.
+- RTVE/RNE (Sapiensantes, Contando cuentos) blockiert seit 2025 manche fremden Player. Ob unsere App betroffen ist, zeigt nur ein Test.
 
 ## Deployment auf Vercel
 
@@ -84,7 +93,10 @@ Es werden keine Umgebungsvariablen benötigt. Alternativ per CLI: `cd hoerkiste 
 
 ## Bedienung
 
-- **Startseite:** große Senderkacheln (2 Spalten am Phone, 3–4 am Tablet), oben links ein kleiner DE/ES-Schalter, oben rechts das Zahnrad.
+- **Startseite:** große Senderkacheln (2 Spalten am Phone, 3–4 am Tablet). Oben links sitzt der kleine Schalter für die Sprache der Oberfläche (💬 DE/ES), oben rechts das Zahnrad.
+- **Filter der Sendungen:** 🌍 alle · 🇩🇪 deutsche · 🇪🇸 spanische · ♥ Lieblinge. Jede Kachel zeigt die Sprache der Sendung als Flagge. Der Filter bleibt gespeichert.
+- **Herz:** Das Herz auf jeder Kachel markiert einen Lieblingssender. Lieblinge stehen immer vorn.
+- **Playlist:** In der Folgenliste setzt ➕ eine Folge auf die eigene Playlist (Kachel „Meine Playlist“ auf der Startseite). Dort kann man Folgen nach oben schieben, entfernen und mit ▶ alles abspielen. Die Playlist läuft am Stück durch, auch über verschiedene Sender hinweg. Im Player erscheinen dann ⏮/⏭, auf dem Sperrbildschirm „Vor/Zurück“. „Alle abspielen“ beginnt bei der ersten noch nicht gehörten Folge. Höchstens 100 Folgen, gespeichert auf dem Gerät.
 - **Folgenliste:** neueste Folge oben mit ★, gehörte Folgen mit ✓ und ausgegraut, Fortschrittsbalken pro Folge.
 - **Player:** Play/Pause (128 px), ±15 s (88 px), Fortschrittsbalken mit großem Griff, 🌙-Sleep-Timer (15/30/45 min). Beim Zurücknavigieren bleibt ein Mini-Player am unteren Rand.
 - **Elternbereich:** Zahnrad **2 s gedrückt halten** oder kurz antippen und die Rechenaufgabe lösen. Die Sperre gilt bis zum Schließen bzw. Neuladen. Dort gibt es den Sprachschalter, Sender ein- und ausblenden, Autoplay (Standard: aus), „Gehört-Status zurücksetzen“ und Infos zu den Datenquellen.
@@ -93,8 +105,8 @@ Es werden keine Umgebungsvariablen benötigt. Alternativ per CLI: `cd hoerkiste 
 
 - Der Fortschritt wird alle 5 s gespeichert, außerdem bei Pause, beim Spulen und beim Verlassen der Seite. Beim nächsten Öffnen geht es an derselben Stelle weiter.
 - Ab 95 % gilt eine Folge als gehört. Eine gehörte Folge beginnt beim nächsten Start von vorn.
-- Am Ende einer Folge startet keine weitere, außer Autoplay ist im Elternbereich eingeschaltet.
-- Alle Daten (Sprache, Fortschritt, Einstellungen) liegen in `localStorage` unter `hk.*`. Jeder Zugriff ist mit try/catch abgesichert, sodass die App auch ohne Speicher läuft.
+- Am Ende einer Folge startet keine weitere, außer Autoplay ist im Elternbereich eingeschaltet. Ausnahme ist die Playlist, die immer weiterspielt.
+- Alle Daten (Sprache, Fortschritt, Filter, Lieblinge, Playlist, Einstellungen) liegen in `localStorage` unter `hk.*`. Jeder Zugriff ist mit try/catch abgesichert, sodass die App auch ohne Speicher läuft.
 - Die Media Session API liefert Titel, Sender und Cover für den Sperrbildschirm. Play/Pause, ±15 s und Spulen funktionieren dort sowie über Kopfhörertasten und Bluetooth im Auto.
 - Offline zeigt die App die zuletzt geladenen Folgenlisten und Cover aus dem Service-Worker-Cache. Audio wird nicht gecacht (Offline-Download kommt in Phase 2).
 

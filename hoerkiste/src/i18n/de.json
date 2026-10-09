@@ -1,8 +1,18 @@
 {
-  "app": { "name": "Hörkiste" },
+  "app": {
+    "name": "Hörkiste"
+  },
   "home": {
     "title": "Was möchtest du hören?",
-    "empty": "Gerade ist keine Sendung da."
+    "empty": "Gerade ist keine Sendung da.",
+    "filter": "Sendungen anzeigen",
+    "filterAll": "Alle Sendungen",
+    "filterDe": "Deutsche Sendungen",
+    "filterEs": "Spanische Sendungen",
+    "filterFav": "Meine Lieblinge",
+    "favAdd": "{{name}} als Liebling markieren",
+    "noFav": "Tippe auf ein Herz, dann erscheint die Sendung hier.",
+    "showLang": "Sendung auf {{lang}}"
   },
   "list": {
     "back": "Zurück",
@@ -22,7 +32,10 @@
     "sleep": "Einschlaf-Timer",
     "sleepOff": "Aus",
     "sleepIn": "Stoppt in {{count}} Min.",
-    "loading": "Lädt …"
+    "loading": "Lädt …",
+    "next": "Nächste Folge",
+    "previous": "Vorige Folge",
+    "fromPlaylist": "Aus deiner Playlist"
   },
   "error": {
     "title": "Hoppla, das hat nicht geklappt.",
@@ -64,5 +77,22 @@
     "sourcesText": "Die Folgenlisten kommen aus den öffentlichen RSS-Feeds der Anbieter. Unser Server liest die Feeds nur ein; die Audiodateien werden direkt vom Anbieter abgespielt. Es gibt keine Werbung, kein Tracking und keine Konten. Fortschritt und Einstellungen bleiben auf diesem Gerät.",
     "version": "Version {{version}}"
   },
-  "lang": { "de": "Deutsch", "es": "Español", "switch": "Sprache" }
+  "lang": {
+    "de": "Deutsch",
+    "es": "Español",
+    "switch": "Sprache",
+    "showDe": "Deutsch",
+    "showEs": "Spanisch"
+  },
+  "playlist": {
+    "title": "Meine Playlist",
+    "open": "Meine Playlist ({{count}})",
+    "add": "Zur Playlist hinzufügen",
+    "remove": "Aus der Playlist nehmen",
+    "playAll": "Alle abspielen",
+    "empty": "Noch leer. Tippe bei einer Folge auf das Plus.",
+    "up": "Nach oben",
+    "clear": "Playlist leeren",
+    "clearConfirm": "Wirklich alle Folgen aus der Playlist nehmen?"
+  }
 }

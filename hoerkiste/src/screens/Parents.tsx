@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../components/Icon';
-import { LangToggle } from '../components/LangToggle';
+import { FLAGS, LangToggle } from '../components/LangToggle';
 import { FEEDS, feedName, fetchFeed, isFeedVisible, type FeedConfig } from '../lib/feeds';
 import { lockParents, parentsUnlocked } from '../lib/gate';
+import { clearPlaylist, usePlaylist } from '../lib/playlist';
 import { resetAllProgress } from '../lib/progress';
 import { navigate } from '../lib/router';
 import { updateSettings, useSettings } from '../lib/settings';
@@ -15,6 +16,7 @@ export function Parents() {
   const settings = useSettings();
   const [checks, setChecks] = useState<Record<string, Check>>({});
   const [resetDone, setResetDone] = useState(false);
+  const playlist = usePlaylist();
   const allowed = parentsUnlocked();
 
   useEffect(() => {
@@ -71,6 +73,7 @@ export function Parents() {
                 <span className="feed-admin-body">
                   <strong>{name}</strong>
                   <span className="note">
+                    <span aria-hidden="true">{FLAGS[f.language as 'de' | 'es'] ?? ''} </span>
                     {f.language.toUpperCase()}
                     {f.verified === false && <> · <em>{t('parents.unverified')}</em></>}
                     {c && <> · <span className={`status-${c.status}`}>{c.status === 'ok' ? t('parents.status.ok', { count: c.count }) : t(`parents.status.${c.status}`)}</span></>}
@@ -116,6 +119,14 @@ export function Parents() {
           {t('parents.reset')}
         </button>
         {resetDone && <p className="note" role="status">{t('parents.resetDone')}</p>}
+        <button
+          type="button"
+          className="btn btn-danger"
+          disabled={playlist.length === 0}
+          onClick={() => window.confirm(t('playlist.clearConfirm')) && clearPlaylist()}
+        >
+          {t('playlist.clear')} ({playlist.length})
+        </button>
       </section>
 
       <section className="card">

@@ -4,12 +4,14 @@ export type Route =
   | { name: 'home' }
   | { name: 'feed'; feedId: string }
   | { name: 'player' }
+  | { name: 'playlist' }
   | { name: 'parents' };
 
 export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
   if (parts[0] === 'sender' && parts[1]) return { name: 'feed', feedId: parts[1] };
   if (parts[0] === 'player') return { name: 'player' };
+  if (parts[0] === 'playlist') return { name: 'playlist' };
   if (parts[0] === 'eltern') return { name: 'parents' };
   return { name: 'home' };
 }
@@ -20,6 +22,8 @@ export function hrefFor(route: Route): string {
       return `#/sender/${encodeURIComponent(route.feedId)}`;
     case 'player':
       return '#/player';
+    case 'playlist':
+      return '#/playlist';
     case 'parents':
       return '#/eltern';
     default:
